@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QLabel, QStackedWidget
 import sys
 from jupyter_widget import JupyterWidget
-from main_widgets import ButtonLabelWidget  # Correctly import your new widget
+from main_widgets import ButtonLabelWidget  
 from calculator_widget import CalculatorWindow
 
 class MainWindow(QMainWindow):
