@@ -45,6 +45,7 @@ class JupyterWidget(QWidget):
         # Extra param usage example, add only if not None or empty
         if extra_param:
             self.extra_label = QLabel(f"Extra Param: {extra_param}")
+            self.extra_label.setFixedHeight(50)
             layout.addWidget(self.extra_label)
 
         self.setLayout(layout)

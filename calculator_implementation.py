@@ -1,15 +1,15 @@
 # ================================================
 # Implementation of Calculator
 # ================================================
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Callable
 from calculator_domain import (
     AccumulatorStateData, ZeroStateData, ComputedStateData, ErrorStateData, MathOperationError,
-    CalculatorInput, CalculatorMathOp, NonZeroDigit, DigitAccumulator, PendingOp
+    CalculatorInput, CalculatorMathOp, NonZeroDigit, DigitAccumulator, PendingOp, CalculatorState
 )
 from calculator_services import CalculatorServices
 import re
 
-def create_calculate(services: CalculatorServices):   
+def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, CalculatorInput, str], CalculatorState]:   
     """
     Defines the state handlers and returns a calculate function to route the state to the appropriate handlers.
     
@@ -19,7 +19,7 @@ def create_calculate(services: CalculatorServices):
     Returns:
         Callable[[CalculatorState, CalculatorInput, str], CalculatorState]: A function that processes the given state and input, and returns the new state. """
     # Handle input during Zero state and return new state 
-    def handle_zero_state(state_data: ZeroStateData, input, memory):
+    def handle_zero_state(state_data: ZeroStateData, input, memory) -> CalculatorState:
         """
         Handles input during the Zero state and returns the new state.
         
@@ -97,7 +97,7 @@ def create_calculate(services: CalculatorServices):
 
     # Handle input during Accmulator state and return new state
     
-    def handle_accumulator_state(state_data: AccumulatorStateData, input):
+    def handle_accumulator_state(state_data: AccumulatorStateData, input) -> CalculatorState:
         """
         Handles input during the Accumulator state and returns the new state.
         
@@ -261,7 +261,7 @@ def create_calculate(services: CalculatorServices):
 
         return state_data  # Return the current state if no condition matches    
     
-    def handle_computed_state(state_data: ComputedStateData, input):
+    def handle_computed_state(state_data: ComputedStateData, input) -> CalculatorState:
         """
         Handles input during the Computed state and returns the new state.
 
@@ -368,7 +368,7 @@ def create_calculate(services: CalculatorServices):
             return ComputedStateData(display_number=float(state_data.memory), memory=state_data.memory)
         
     # Handle input during Error state and return zero state for input CLEAR
-    def handle_error_state(state_data: ErrorStateData, input, memory):
+    def handle_error_state(state_data: ErrorStateData, input, memory) -> CalculatorState:
         """
         Handles input during the Error state and returns the new state.
         
@@ -408,7 +408,7 @@ def create_calculate(services: CalculatorServices):
         Returns:
             CalculatorState: The new state of the calculator after processing the current operation.
         """
-        def get_new_state(display_number):
+        def get_new_state(display_number) -> ComputedStateData:
             """
             Creates a new state with the given display number and returns a ComputedStateData instance.
 
@@ -435,7 +435,7 @@ def create_calculate(services: CalculatorServices):
         return compute_state_with_no_pending_op
     
     
-    def calculate(input, state):
+    def calculate(input, state) -> Optional[CalculatorState]:
         """
         Routes the input and state to the appropriate handler and returns the new calculator state.
         

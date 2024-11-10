@@ -1,7 +1,7 @@
 # ================================================
 # Calculator Services
 # ================================================
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Dict, Callable
 from calculator_domain import (NonZeroDigit, PendingOp, CalculatorMathOp, Number,
     DigitAccumulator, ZeroStateData, AccumulatorStateData, ComputedStateData,
     ErrorStateData, MathOperationError, MathOperationResult, CalculatorInput)
@@ -199,11 +199,28 @@ class CalculatorServices:
             'M+': (CalculatorInput.MATHOP, CalculatorMathOp.MEMORYADD),
             'M-': (CalculatorInput.MATHOP, CalculatorMathOp.MEMORYSUBTRACT)
         }
+    
+    ten_key_input_mapping = {
+            '0': (CalculatorInput.ZERO, None),
+            '1': (CalculatorInput.DIGIT, NonZeroDigit.ONE),
+            '2': (CalculatorInput.DIGIT, NonZeroDigit.TWO),
+            '3': (CalculatorInput.DIGIT, NonZeroDigit.THREE),
+            '4': (CalculatorInput.DIGIT, NonZeroDigit.FOUR),
+            '5': (CalculatorInput.DIGIT, NonZeroDigit.FIVE),
+            '6': (CalculatorInput.DIGIT, NonZeroDigit.SIX),
+            '7': (CalculatorInput.DIGIT, NonZeroDigit.SEVEN),
+            '8': (CalculatorInput.DIGIT, NonZeroDigit.EIGHT),
+            '9': (CalculatorInput.DIGIT, NonZeroDigit.NINE),
+            '.': (CalculatorInput.DECIMALSEPARATOR, None),
+            '←': (CalculatorInput.BACK, None),
+            'CE': (CalculatorInput.CLEARENTRY, None)
+        }
     """
     Returns a dictionary of charachter mappings to calculator inputs
     """
     @staticmethod
-    def create_services() -> dict:
+    
+    def create_services() -> Dict[str, Callable]:
         """
         Creates and returns a dictionary of calculator service functions.
         Each service function is mapped to a corresponding key, allowing for
