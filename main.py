@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 import sys
 from jupyter_widget import JupyterWidget
 from main_widgets import ButtonLabelWidget  
-from calculator_widget import CalculatorWindow
+from basic_calculator_widget import BasicCalculatorWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -28,17 +28,15 @@ class MainWindow(QMainWindow):
         self.jupyter_widget_btn.button.setIcon(QIcon.fromTheme("jupyter"))
         self.jupyter_widget_btn.button.setIconSize(QSize(24, 24))
         
-        self.calculator_window_btn = ButtonLabelWidget(
+        self.basic_calculator_window_btn = ButtonLabelWidget(
             label_text='Basic Calculator',
             button_text='Launch',
             button_callback=self.show_calculator)
-        self.calculator_window_btn.button.setIcon(QIcon.fromTheme("accessories-calculator"))
-        self.calculator_window_btn.button.setIconSize(QSize(24, 24))
-        
-        # self.calculator_window_btn.button.clicked.connect(self.show_calculator)
+        self.basic_calculator_window_btn.button.setIcon(QIcon.fromTheme("accessories-calculator"))
+        self.basic_calculator_window_btn.button.setIconSize(QSize(24, 24))
         
         self.main_layout.addWidget(self.jupyter_widget_btn)
-        self.main_layout.addWidget(self.calculator_window_btn)
+        self.main_layout.addWidget(self.basic_calculator_window_btn)
 
         self.main_menu.setLayout(self.main_layout)
 
@@ -57,8 +55,8 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.jupyter_widget)
 
     def show_calculator(self):
-        self.calculator_window = CalculatorWindow()
-        self.calculator_window.show()
+        self.basic_calculator_window = BasicCalculatorWindow()
+        self.basic_calculator_window.show()
 
     def show_main_menu(self):
         if self.jupyter_widget:

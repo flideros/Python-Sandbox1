@@ -1,13 +1,15 @@
 # ================================================
-# UI for Calculator
+# UI for a Basic Calculator
 # ================================================
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QGridLayout, QPushButton, QLabel, QWidget, QStyle
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt, QSize
 from calculator_services import CalculatorServices
 from calculator_implementation import create_calculate  
+import sys
+import time
 
-class Calculator(QWidget):
+class BasicCalculator(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -23,7 +25,9 @@ class Calculator(QWidget):
         self.get_pending_op_from_state = services["get_pending_op_from_state"]
         self.get_memo_from_state = services["get_memo_from_state"]
 
-        # Initial state
+        # Initial state and counters
+        self.delete_press_count = 0
+        self.last_delete_press_time = 0
         self.state = CalculatorServices.initial_state
         QIcon.setThemeName("Papirus")
 
@@ -193,23 +197,33 @@ class Calculator(QWidget):
             Qt.Key.Key_4: '4', Qt.Key.Key_5: '5', Qt.Key.Key_6: '6', Qt.Key.Key_7: '7',
             Qt.Key.Key_8: '8', Qt.Key.Key_9: '9', Qt.Key.Key_Period: '.', Qt.Key.Key_Backspace: '←',
             Qt.Key.Key_Plus: '+', Qt.Key.Key_Minus: '-', Qt.Key.Key_Asterisk: '*', Qt.Key.Key_Slash: '/',
-            Qt.Key.Key_Enter: '=', Qt.Key.Key_Return: '=', Qt.Key.Key_Escape: 'CE'
+            Qt.Key.Key_Enter: '=', Qt.Key.Key_Return: '=' 
         }
         if key in key_mapping:
             self.handle_input(key_mapping[key])
+        elif key == Qt.Key.Key_Delete:
+            current_time = time.time()
+            if current_time - self.last_delete_press_time < 1:
+                self.delete_press_count += 1
+            else:
+                self.delete_press_count = 1 # Reset counter if more than 1 second has passed
+            self.last_delete_press_time = current_time
+            if self.delete_press_count == 1:                
+                self.handle_input('CE')
+            elif self.delete_press_count == 2:
+                self.handle_input('C')
 
-
-class CalculatorWindow(QMainWindow):
+class BasicCalculatorWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Calculator")
         self.setGeometry(100, 100, 400, 200)
-        self.calculator = Calculator()
+        self.calculator = BasicCalculator()
         self.setCentralWidget(self.calculator)
 
 # Standalone example entry point
 if __name__ == "__main__":
     app = QApplication([])
-    calculator_window = CalculatorWindow()
+    calculator_window = BasicCalculatorWindow()
     calculator_window.show()
     app.exec()
