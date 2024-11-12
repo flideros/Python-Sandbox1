@@ -35,44 +35,48 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
         if input == CalculatorInput.ZERO:
             print("Zero Input - State remains ZeroState")
             return ZeroStateData(pending_op=state_data.pending_op, memory=state_data.memory)
+        
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+        
+            if input_type == 'DIGIT' and input_value in range(1, 10):
+                accumulate_function = services['accumulate_non_zero_digit']
+                new_digits = accumulate_function(input_value, digits)  # Now call the function with the correct arguments
+                return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
 
-        elif input[0] == 'DIGIT' and input[1] in range(1, 10):
-            accumulate_function = services['accumulate_non_zero_digit']
-            new_digits = accumulate_function(input[1], digits)  # Now call the function with the correct arguments
-            return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+            elif input_type == 'MATHOP':   
+                if _input_value in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
+                    if state_data.pending_op is None:
+                        new_op = (_input_value, 0)
+                        return ZeroStateData(pending_op=new_op, memory=state_data.memory)
+                    else:
+                        _old_op, numb = state_data.pending_op
+                        new_op = (_input_value, numb)
+                        return ZeroStateData(pending_op=new_op, memory=state_data.memory)
+                    
+                elif _input_value in [CalculatorMathOp.MEMORYADD, CalculatorMathOp.MEMORYSUBTRACT]:
+                    return ZeroStateData(pending_op=state_data.pending_op, memory=memory)
 
+                elif _input_value == CalculatorMathOp.CHANGESIGN:
+                    return AccumulatorStateData(digits="-", pending_op=state_data.pending_op, memory=memory)
+
+                elif _input_value == CalculatorMathOp.INVERSE:
+                    return ErrorStateData(math_error=MathOperationError.DIVIDEBYZERO, memory=memory)
+
+                elif _input_value in [CalculatorMathOp.ROOT, CalculatorMathOp.PERCENT]:
+                    return ZeroStateData(pending_op=state_data.pending_op, memory=memory)
+        
         elif input == CalculatorInput.DECIMALSEPARATOR:
             new_digits = services["accumulate_separator"](digits)
             print(f"Decimal added to accumulator: {new_digits}")
             return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
 
-        elif input[0] == 'MATHOP' and input[1] in range(0, 9):   
-            if input[1] in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
-                if state_data.pending_op is None:
-                    new_op = (input[1], 0)
-                    return ZeroStateData(pending_op=new_op, memory=state_data.memory)
-                else:
-                    _old_op, numb = state_data.pending_op
-                    new_op = (input[1], numb)
-                    return ZeroStateData(pending_op=new_op, memory=state_data.memory)
-                
-            elif input[1] in [CalculatorMathOp.MEMORYADD, CalculatorMathOp.MEMORYSUBTRACT]:
-                return ZeroStateData(pending_op=state_data.pending_op, memory=memory)
-
-            elif input[1] == CalculatorMathOp.CHANGESIGN:
-                return AccumulatorStateData(digits="-", pending_op=state_data.pending_op, memory=memory)
-
-            elif input[1] == CalculatorMathOp.INVERSE:
-                return ErrorStateData(error=MathOperationError.DIVIDEBYZERO, memory=memory)
-
-            elif input[1] in [CalculatorMathOp.ROOT, CalculatorMathOp.PERCENT]:
-                return ZeroStateData(pending_op=state_data.pending_op, memory=memory)
-
         elif input == CalculatorInput.EQUALS:
             if state_data.pending_op is not None:
                 pending_op, _ = state_data.pending_op
                 if pending_op == CalculatorMathOp.DIVIDE:
-                    return ErrorStateData(error=MathOperationError.DIVIDEBYZERO, memory=memory)
+                    return ErrorStateData(math_error=MathOperationError.DIVIDEBYZERO, memory=memory)
             return ZeroStateData(pending_op=state_data.pending_op, memory=memory)
 
         elif input == CalculatorInput.CLEARENTRY:
@@ -95,8 +99,6 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
 
         return state_data  # Return the current state if no condition matches
 
-    # Handle input during Accmulator state and return new state
-    
     def handle_accumulator_state(state_data: AccumulatorStateData, input) -> CalculatorState:
         """
         Handles input during the Accumulator state and returns the new state.
@@ -108,10 +110,112 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
         Returns:
             CalculatorState: The new state of the calculator after processing the input.
         """
-        if input[0] == 'DIGIT' and input[1] in range(1, 10):
-            new_digits = services["accumulate_non_zero_digit"](input[1], state_data.digits)
-            return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
-
+        if isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+            if input_type == 'DIGIT':
+                new_digits = services["accumulate_non_zero_digit"](input_value, state_data.digits)
+                return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+            
+            elif input_type == 'MATHOP': 
+                if _input_value in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
+                    if state_data.pending_op is None:
+                        new_op = (_input_value, float(state_data.digits))
+                        return ZeroStateData(pending_op=new_op, memory=state_data.memory)
+                    else:
+                        _old_op, numb = state_data.pending_op
+                        new_op = (_input_value, numb)
+                        return AccumulatorStateData(digits=state_data.digits,pending_op=new_op, memory=state_data.memory)
+                
+                elif _input_value == CalculatorMathOp.MEMORYADD:                
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None                
+                    try: e = float(state_data.memory)
+                    except ValueError: e = None
+                    
+                    if d is not None and e is not None:
+                        math_result = services['do_math_operation'](CalculatorMathOp.MEMORYADD,d,e,memory=state_data.memory)
+                        new_memory = str(math_result.success)
+                        print(f"{d} added to memory.")
+                    elif d is None and e is not None: new_memory = str(e)
+                    elif d is not None and e is None: new_memory = str(d)
+                    else: new_memory = " "
+                    print(f"Memory now {new_memory}")
+                    return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=new_memory)
+                            
+                elif _input_value == CalculatorMathOp.MEMORYSUBTRACT:                
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None                
+                    try: e = float(state_data.memory)
+                    except ValueError: e = None
+                    
+                    if d is not None and e is not None:
+                        math_result = services['do_math_operation'](CalculatorMathOp.MEMORYSUBTRACT,d,e,memory=state_data.memory)
+                        new_memory = str(math_result.success)
+                        print(f"{d} subtracted from memory.")
+                    elif d is None and e is not None: new_memory = str(e)
+                    elif d is not None and e is None: new_memory = str(-d)
+                    else: new_memory = " "
+                    print(f"Memory now {new_memory}")
+                    return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=new_memory)
+      
+                elif _input_value == CalculatorMathOp.CHANGESIGN:
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None
+                    if d is not None:
+                        math_result = services['do_math_operation'](CalculatorMathOp.CHANGESIGN,d,-1,memory=state_data.memory)
+                        if math_result.success > 0:                        
+                            new_digits = str(math_result.success)                        
+                            return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                        else:
+                            new_digits = '-' + state_data.digits
+                            return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                        
+                    return state_data
+                    
+                elif _input_value == CalculatorMathOp.INVERSE: # op 4
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None
+                    if d == None:
+                        return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                    else:
+                        math_result = services['do_math_operation'](CalculatorMathOp.INVERSE,d,1,memory=state_data.memory)
+                        if math_result.success is not None:
+                            if state_data.pending_op is None:
+                                return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
+                            else:
+                                return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)
+                        else:
+                            return ErrorStateData(math_error=math_result.failure,memory=state_data.memory)
+                    
+                elif _input_value == CalculatorMathOp.ROOT:
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None
+                    if d == None:
+                        return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                    else:
+                        math_result = services['do_math_operation'](CalculatorMathOp.ROOT,d,1,memory=state_data.memory)
+                        if math_result.success is not None:
+                            if state_data.pending_op is None:
+                                return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
+                            else:
+                                return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)
+                        else:
+                            print(math_result.failure)
+                            return ErrorStateData(math_error=math_result.failure, memory=state_data.memory)
+                
+                elif _input_value == CalculatorMathOp.PERCENT:
+                    try: d = float(state_data.digits)
+                    except ValueError: d = None
+                    if d == None:
+                        return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                    else:
+                        math_result = services['do_math_operation'](CalculatorMathOp.PERCENT,d,None,memory=state_data.memory)
+                        if state_data.pending_op is None:
+                            return ComputedStateData(display_number = math_result.success,memory=state_data.memory)
+                        else:
+                            return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)              
+            
         elif input == CalculatorInput.DECIMALSEPARATOR:
             new_digits = services["accumulate_separator"](state_data.digits)
             print(f"Decimal added to accumulator: {new_digits}")
@@ -121,105 +225,6 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
             new_digits = services["accumulate_zero"](state_data.digits)
             print(f"Accumulating zero to {state_data.digits}, Result: {new_digits}")
             return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
-
-        elif input[0] == 'MATHOP' and input[1] in range(0, 10):   
-            if input[1] in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
-                if state_data.pending_op is None:
-                    new_op = (input[1], float(state_data.digits))
-                    return ZeroStateData(pending_op=new_op, memory=state_data.memory)
-                else:
-                    _old_op, numb = state_data.pending_op
-                    new_op = (input[1], numb)
-                    return AccumulatorStateData(digits=state_data.digits,pending_op=new_op, memory=state_data.memory)
-            
-            elif input[1] == CalculatorMathOp.MEMORYADD:                
-                try: d = float(state_data.digits)
-                except ValueError: d = None                
-                try: e = float(state_data.memory)
-                except ValueError: e = None
-                
-                if d is not None and e is not None:
-                    math_result = services['do_math_operation'](CalculatorMathOp.MEMORYADD,d,e,memory=state_data.memory)
-                    new_memory = str(math_result.success)
-                    print(f"{d} added to memory.")
-                elif d is None and e is not None: new_memory = str(e)
-                elif d is not None and e is None: new_memory = str(d)
-                else: new_memory = " "
-                print(f"Memory now {new_memory}")
-                return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=new_memory)
-                        
-            elif input[1] == CalculatorMathOp.MEMORYSUBTRACT:                
-                try: d = float(state_data.digits)
-                except ValueError: d = None                
-                try: e = float(state_data.memory)
-                except ValueError: e = None
-                
-                if d is not None and e is not None:
-                    math_result = services['do_math_operation'](CalculatorMathOp.MEMORYSUBTRACT,d,e,memory=state_data.memory)
-                    new_memory = str(math_result.success)
-                    print(f"{d} subtracted from memory.")
-                elif d is None and e is not None: new_memory = str(e)
-                elif d is not None and e is None: new_memory = str(-d)
-                else: new_memory = " "
-                print(f"Memory now {new_memory}")
-                return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=new_memory)
-  
-            elif input[1] == CalculatorMathOp.CHANGESIGN:
-                try: d = float(state_data.digits)
-                except ValueError: d = None
-                if d is not None:
-                    math_result = services['do_math_operation'](CalculatorMathOp.CHANGESIGN,d,-1,memory=state_data.memory)
-                    if math_result.success > 0:                        
-                        new_digits = str(math_result.success)                        
-                        return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
-                    else:
-                        new_digits = '-' + state_data.digits
-                        return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
-                    
-                return state_data
-                
-            elif input[1] == CalculatorMathOp.INVERSE: # op 4
-                try: d = float(state_data.digits)
-                except ValueError: d = None
-                if d == None:
-                    return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
-                else:
-                    math_result = services['do_math_operation'](CalculatorMathOp.INVERSE,d,1,memory=state_data.memory)
-                    if math_result.success is not None:
-                        if state_data.pending_op is None:
-                            return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
-                        else:
-                            return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)
-                    else:
-                        return ErrorStateData(error=math_result.failure,memory=state_data.memory)
-                
-            elif input[1] == CalculatorMathOp.ROOT:
-                try: d = float(state_data.digits)
-                except ValueError: d = None
-                if d == None:
-                    return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
-                else:
-                    math_result = services['do_math_operation'](CalculatorMathOp.ROOT,d,1,memory=state_data.memory)
-                    if math_result.success is not None:
-                        if state_data.pending_op is None:
-                            return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
-                        else:
-                            return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)
-                    else:
-                        print(math_result.failure)
-                        return ErrorStateData(error=math_result.failure, memory=state_data.memory)
-            
-            elif input[1] == CalculatorMathOp.PERCENT:
-                try: d = float(state_data.digits)
-                except ValueError: d = None
-                if d == None:
-                    return AccumulatorStateData(digits=state_data.digits, pending_op=state_data.pending_op, memory=state_data.memory)
-                else:
-                    math_result = services['do_math_operation'](CalculatorMathOp.PERCENT,d,None,memory=state_data.memory)
-                    if state_data.pending_op is None:
-                        return ComputedStateData(display_number = math_result.success,memory=state_data.memory)
-                    else:
-                        return AccumulatorStateData(digits=str(math_result.success), pending_op=state_data.pending_op, memory=state_data.memory)              
 
         elif input == CalculatorInput.EQUALS:
             print("performing calculation")
@@ -278,73 +283,77 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
         if input == CalculatorInput.ZERO:
             return ZeroStateData(pending_op=empty_accumulator_state_data.pending_op, memory=state_data.memory)
 
-        elif input[0] == 'DIGIT' and input[1] in range(1, 10):
-            new_digits = services["accumulate_non_zero_digit"](input[1], " ")
-            return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
-
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+        
+            if input_type == 'DIGIT':
+                new_digits = services["accumulate_non_zero_digit"](input[1], " ")
+                return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+            
+            elif input_type == 'MATHOP':   
+                if _input_value in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
+                    next_op = _input_value
+                    pending_op = (next_op, state_data.display_number)
+                    return ZeroStateData(pending_op=pending_op, memory=state_data.memory)
+                
+                elif input_value == CalculatorMathOp.MEMORYADD:
+                    d = state_data.display_number                
+                    try: e = float(state_data.memory)
+                    except ValueError: e = None
+                    
+                    if e is not None:
+                        math_result = services['do_math_operation'](CalculatorMathOp.MEMORYADD,d,e,memory=state_data.memory)
+                        new_memory = str(math_result.success)            
+                    elif e is None: new_memory = str(d)
+                    else: new_memory = " "
+                    print(f"Memory now {new_memory}")
+                    return ComputedStateData(display_number=state_data.display_number, memory=new_memory)
+                            
+                elif _input_value == CalculatorMathOp.MEMORYSUBTRACT:
+                    d = state_data.display_number               
+                    try: e = float(state_data.memory)
+                    except ValueError: e = None
+                    
+                    if e is not None:
+                        math_result = services['do_math_operation'](CalculatorMathOp.MEMORYSUBTRACT,d,e,memory=state_data.memory)
+                        new_memory = str(math_result.success)
+                    elif e is None: new_memory = str(-d)
+                    else: new_memory = " "
+                    print(f"Memory now {new_memory}")
+                    return ComputedStateData(display_number=state_data.display_number, memory=new_memory)
+      
+                elif _input_value == CalculatorMathOp.CHANGESIGN:
+                    d = state_data.display_number
+                    math_result = services['do_math_operation'](CalculatorMathOp.CHANGESIGN,d,-1,memory=state_data.memory)
+                    return ComputedStateData(display_number=math_result.success, memory=state_data.memory)
+                    
+                elif _input_value == CalculatorMathOp.INVERSE:
+                    d = state_data.display_number
+                    math_result = services['do_math_operation'](CalculatorMathOp.INVERSE,d,1,memory=state_data.memory)
+                    if math_result.success is not None:
+                        return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
+                    else:
+                        return ErrorStateData(math_error=math_result.failure, memory=state_data.memory)
+                    
+                elif _input_value == CalculatorMathOp.ROOT:
+                    d = state_data.display_number
+                    math_result = services['do_math_operation'](CalculatorMathOp.ROOT,d,1,memory=state_data.memory)
+                    if math_result.success is not None:
+                        return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
+                    else:
+                        print(math_result.failure)
+                        return ErrorStateData(math_error=math_result.failure, memory=state_data.memory)
+                
+                elif _input_value == CalculatorMathOp.PERCENT:
+                    d = state_data.display_number
+                    math_result = services['do_math_operation'](CalculatorMathOp.PERCENT,d,None,memory=state_data.memory)
+                    return ComputedStateData(display_number = math_result.success, memory=state_data.memory)          
+            
         elif input == CalculatorInput.DECIMALSEPARATOR:
             new_accumulator_data = AccumulatorStateData(digits="0.", pending_op=state_data.pending_op, memory=state_data.memory)
             print(f"Decimal added to accumulator: {new_digits}")
             return new_accumulator_data
-        
-        elif input[0] == 'MATHOP' and input[1] in range(0, 10):   
-            if input[1] in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
-                next_op = input[1]
-                pending_op = (next_op, state_data.display_number)
-                return ZeroStateData(pending_op=pending_op, memory=state_data.memory)
-            
-            elif input[1] == CalculatorMathOp.MEMORYADD:
-                d = state_data.display_number                
-                try: e = float(state_data.memory)
-                except ValueError: e = None
-                
-                if e is not None:
-                    math_result = services['do_math_operation'](CalculatorMathOp.MEMORYADD,d,e,memory=state_data.memory)
-                    new_memory = str(math_result.success)            
-                elif e is None: new_memory = str(d)
-                else: new_memory = " "
-                print(f"Memory now {new_memory}")
-                return ComputedStateData(display_number=state_data.display_number, memory=new_memory)
-                        
-            elif input[1] == CalculatorMathOp.MEMORYSUBTRACT:
-                d = state_data.display_number               
-                try: e = float(state_data.memory)
-                except ValueError: e = None
-                
-                if e is not None:
-                    math_result = services['do_math_operation'](CalculatorMathOp.MEMORYSUBTRACT,d,e,memory=state_data.memory)
-                    new_memory = str(math_result.success)
-                elif e is None: new_memory = str(-d)
-                else: new_memory = " "
-                print(f"Memory now {new_memory}")
-                return ComputedStateData(display_number=state_data.display_number, memory=new_memory)
-  
-            elif input[1] == CalculatorMathOp.CHANGESIGN:
-                d = state_data.display_number
-                math_result = services['do_math_operation'](CalculatorMathOp.CHANGESIGN,d,-1,memory=state_data.memory)
-                return ComputedStateData(display_number=math_result.success, memory=state_data.memory)
-                
-            elif input[1] == CalculatorMathOp.INVERSE:
-                d = state_data.display_number
-                math_result = services['do_math_operation'](CalculatorMathOp.INVERSE,d,1,memory=state_data.memory)
-                if math_result.success is not None:
-                    return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
-                else:
-                    return ErrorStateData(error=math_result.failure, memory=state_data.memory)
-                
-            elif input[1] == CalculatorMathOp.ROOT:
-                d = state_data.display_number
-                math_result = services['do_math_operation'](CalculatorMathOp.ROOT,d,1,memory=state_data.memory)
-                if math_result.success is not None:
-                    return ComputedStateData(display_number = math_result.success, memory=state_data.memory)
-                else:
-                    print(math_result.failure)
-                    return ErrorStateData(error=math_result.failure, memory=state_data.memory)
-            
-            elif input[1] == CalculatorMathOp.PERCENT:
-                d = state_data.display_number
-                math_result = services['do_math_operation'](CalculatorMathOp.PERCENT,d,None,memory=state_data.memory)
-                return ComputedStateData(display_number = math_result.success, memory=state_data.memory)          
         
         elif input == CalculatorInput.EQUALS:
             return state_data
@@ -380,10 +389,8 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
             CalculatorState: The new state of the calculator after processing the input.
         """
         if input in [
-            CalculatorInput.ZERO,
-            CalculatorInput.DIGIT,
-            CalculatorInput.DECIMALSEPARATOR,
-            CalculatorInput.MATHOP,
+            CalculatorInput.ZERO,            
+            CalculatorInput.DECIMALSEPARATOR,            
             CalculatorInput.CLEARENTRY,
             CalculatorInput.BACK,
             CalculatorInput.MEMORYSTORE,
@@ -392,6 +399,14 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
             CalculatorInput.EQUALS,
         ]:
             return state_data  # Stay in ErrorState
+        
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            if input_type == 'DIGIT':
+                return state_data
+            if input_type == 'MATHOP':
+                return state_data
+        
         elif input == CalculatorInput.CLEAR:
             return ZeroStateData(pending_op=None, memory=" ")  # Transition to ZeroState and throw away any pending ops
     
@@ -430,7 +445,7 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
             if result.success is not None:
                 return get_new_state(result.success)
             else:
-                return ErrorStateData(error=result.failure, memory=" ")
+                return ErrorStateData(math_error=result.failure, memory=" ")
         
         return compute_state_with_no_pending_op
     

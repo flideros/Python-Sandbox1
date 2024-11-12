@@ -118,7 +118,7 @@ class CalculatorServices:
                     return number_str.rstrip('0') #.rstrip('.')
                 return number_str
             elif isinstance(calculator_state, ErrorStateData):
-                return error_msg + calculator_state.error
+                return error_msg + calculator_state.math_error.value
         return inner
 
     def get_pending_op_from_state(self):

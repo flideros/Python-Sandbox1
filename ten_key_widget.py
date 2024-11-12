@@ -220,7 +220,7 @@ class TenKeyWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Ten Key Input and Display")
         self.setGeometry(100, 100, 400, 200)
-        self.ten_key = TenKey('digits_ce_decimal')
+        self.ten_key = TenKey('default')
         self.setCentralWidget(self.ten_key)
 
 # Standalone example entry point
