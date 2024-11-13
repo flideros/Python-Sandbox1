@@ -9,6 +9,45 @@ from dataclasses import dataclass
 Number = float
 DigitAccumulator = str
 
+class CalculatorState(Enum):
+    """
+    Enumeration for the different states of the calculator.
+    """
+    # Common states
+    ERROR = 0
+    # Basic number entry states
+    ZERO = 1
+    ACCUMULATOR = 2
+    COMPUTED = 3
+    # Expression entry states    
+    START = 4
+    ENTERING_NUMBER = 5
+    OPERATOR_INPUT = 6
+    RESULT = 7
+    PARENTHESIS_OPEN = 8
+    ROOT_INPUT = 9
+
+class CalculatorInput(Enum):
+    """
+    Represents various inputs for the calculator.
+    """
+    ZERO = "ZERO"
+    DIGIT = lambda digit: ('DIGIT', digit)
+    DECIMALSEPARATOR = "DECIMALSEPARATOR"
+    MATHOP = lambda op: ('MATHOP', op)
+    EQUALS = "EQUALS"
+    CLEAR = "CLEAR"
+    CLEARENTRY = "CLEARENTRY"
+    BACK = "BACK"
+    MEMORYSTORE = "MEMORYSTORE"
+    MEMORYCLEAR = "MEMORYCLEAR"
+    MEMORYRECALL = "MEMORYRECALL"
+    
+    def __call__(self, *args):
+        if callable(self.value):
+            return self.value(*args)
+        raise TypeError(f"{self.name} is not callable")
+    
 class NonZeroDigit(Enum):
     """
     Enumeration for non-zero digits.
@@ -64,6 +103,7 @@ class MathOperationResult:
     def __str__(self):
         return f"MathOperationResult(success='{success}', failure='{failure}')"
 
+# Computation States
 @dataclass
 class AccumulatorStateData:
     """
@@ -108,6 +148,7 @@ class ErrorStateData:
         memory (str): The memory state.
     """
     math_error: Optional[MathOperationError] = None
+    # additional error types as needed
     memory: str = ""
                  
     def __str__(self):
@@ -128,92 +169,92 @@ class ZeroStateData:
     def __str__(self):
         return f"ZeroStateData(pending_op={self.pending_op}, memory='{self.memory}')"
 
+# Expression States
 @dataclass
 class StartState:
-    pass
+    memory: str = ""
 
 @dataclass
-class EnteringNumberState:
+class NumberInputState:
     current_value: str
+    memory: str = ""
 
 @dataclass
 class OperatorInputState:
     previous_value: str
     operator: str
     current_value: str
-
+    memory: str = ""
+    
 @dataclass
 class ResultState:
     result: str
-
+    memory: str = ""
+    
 @dataclass
 class ParenthesisOpenState:
     inner_expression: str
-
-@dataclass
-class RootInputState:
-    current_value: str
-
-class CalculatorState(Enum):
-    """
-    Enumeration for the different states of the calculator.
-    """
-    # Common states
-    ERROR = 0
-    # Basic number entry states
-    ZERO = 1
-    ACCUMULATOR = 2
-    COMPUTED = 3
-    # Expression entry states    
-    START = 4
-    ENTERING_NUMBER = 5
-    OPERATOR_INPUT = 6
-    RESULT = 7
-    PARENTHESIS_OPEN = 8
-    ROOT_INPUT = 9
-
-class CalculatorInput(Enum):
-    """
-    Represents various inputs for the calculator.
-    """
-    ZERO = "ZERO"
-    DIGIT = lambda digit: ('DIGIT', digit)
-    DECIMALSEPARATOR = "DECIMALSEPARATOR"
-    MATHOP = lambda op: ('MATHOP', op)
-    EQUALS = "EQUALS"
-    CLEAR = "CLEAR"
-    CLEARENTRY = "CLEARENTRY"
-    BACK = "BACK"
-    MEMORYSTORE = "MEMORYSTORE"
-    MEMORYCLEAR = "MEMORYCLEAR"
-    MEMORYRECALL = "MEMORYRECALL"
+    memory: str = ""
     
-    def __call__(self, *args):
-        if callable(self.value):
-            return self.value(*args)
-        raise TypeError(f"{self.name} is not callable")
+@dataclass
+class FunctionInputState:
+    current_value: str
+    memory: str = ""
     
 # Expression Tree Data Structure
+'''
+Expression: This is the base class for all types of expressions. It's defined as
+an empty class (a placeholder) from which other expression types inherit.
+'''
 @dataclass
 class Expression:
     pass
-
+'''
+Number:
+--Represents a numerical value in the expression.
+--Inherits from Expression.
+--Contains a single field value which is a string representation of the number.
+'''
 @dataclass
 class Number(Expression):
     value: str
-
+'''
+Operator:
+--Represents an operator (e.g., +, -, *, /) in the expression.
+--Inherits from Expression.
+--Contains a single field operator which is a string representing the operator.
+'''
 @dataclass
 class Operator(Expression):
     operator: str
-
+'''
+Parenthesis:
+--Represents an expression enclosed in parentheses.
+--Inherits from Expression.
+--Contains a single field expression which is another Expression type,
+  indicating the expression within the parentheses.
+'''
 @dataclass
 class Parenthesis(Expression):
     expression: 'Expression'
-
+'''
+Function:
+--Represents a function application to an argument.
+--Inherits from Expression.
+--This field holds a callable function that takes a string representation of an
+  expression and returns a string. This allows you to define any mathematical
+  function (e.g., square root, sine, cosine) and apply it to the expression.
+'''
 @dataclass
-class Root(Expression):
+class Function(Expression):
     expression: 'Expression'
-
+    function: Callable[[str], str]
+'''
+Compound:
+--Represents a compound expression composed of multiple sub-expressions.
+--Inherits from Expression.
+--Contains a single field expressions which is a list of Expression objects.
+'''
 @dataclass
 class Compound(Expression):
     expressions: List[Expression]
@@ -226,8 +267,8 @@ def evaluate_expression(expr: Expression) -> str:
         return expr.operator
     elif isinstance(expr, Parenthesis):
         return f"({evaluate_expression(expr.expression)})"
-    elif isinstance(expr, Root):
-        return f"√({evaluate_expression(expr.expression)})"
+    elif isinstance(expr, Sqrt):
+        return expr.function(evaluate_expression(expr.expression))
     elif isinstance(expr, Compound):
         return "".join(evaluate_expression(e) for e in expr.expressions)
     else:

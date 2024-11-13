@@ -1,6 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
-from typing import List
+from typing import List, Callable
 
 # Expression Tree Data Structure
 @dataclass
@@ -20,8 +20,9 @@ class Parenthesis(Expression):
     expression: 'Expression'
 
 @dataclass
-class Root(Expression):
+class Function(Expression):
     expression: 'Expression'
+    function: Callable[[str], str]
 
 @dataclass
 class Compound(Expression):
@@ -35,8 +36,8 @@ def evaluate_expression(expr: Expression) -> str:
         return expr.operator
     elif isinstance(expr, Parenthesis):
         return f"({evaluate_expression(expr.expression)})"
-    elif isinstance(expr, Root):
-        return f"√({evaluate_expression(expr.expression)})"
+    elif isinstance(expr, Function):        
+        return expr.function(evaluate_expression(expr.expression))
     elif isinstance(expr, Compound):
         return "".join(evaluate_expression(e) for e in expr.expressions)
     else:
@@ -50,7 +51,7 @@ class CalculatorState(Enum):
     RESULT = 3
     ERROR = 4
     PARENTHESIS_OPEN = 5
-    ROOT_INPUT = 6
+    FUNCTION_INPUT = 6
 
 @dataclass
 class StartState:
@@ -79,7 +80,7 @@ class ParenthesisOpenState:
     inner_expression: str
 
 @dataclass
-class RootInputState:
+class FunctionInputState:
     current_value: str
 
 # FourFunctionCalculator Class
@@ -94,7 +95,7 @@ class FourFunctionCalculator:
     def input_digit(self, digit: str):
         self.save_state()
         number = Number(value=digit)
-        if isinstance(self.state_data, ParenthesisOpenState) or isinstance(self.state_data, RootInputState):
+        if isinstance(self.state_data, ParenthesisOpenState) or isinstance(self.state_data, FunctionInputState):
             if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Root)):
                 self.expression_tree.expressions[-1].expression.expressions.append(number)
             else:
@@ -108,7 +109,7 @@ class FourFunctionCalculator:
     def input_operator(self, operator: str):
         self.save_state()
         operator_expr = Operator(operator=operator)
-        if self.state not in {CalculatorState.PARENTHESIS_OPEN, CalculatorState.ROOT_INPUT}:
+        if self.state not in {CalculatorState.PARENTHESIS_OPEN, CalculatorState.FUNCTION_INPUT}:
             self.expression_tree.expressions.append(operator_expr)
         self.state_data = OperatorInputState(
             previous_value=self.state_data.current_value if isinstance(self.state_data, EnteringNumberState) else "",
@@ -136,7 +137,7 @@ class FourFunctionCalculator:
     def input_parenthesis_open(self):
         self.save_state()
         new_compound = Compound([])
-        if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Root)):
+        if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Function)):
             self.expression_tree.expressions[-1].expression.expressions.append(new_compound)
         else:
             self.expression_tree.expressions.append(Parenthesis(new_compound))
@@ -155,18 +156,18 @@ class FourFunctionCalculator:
             self.state_data = previous_state_data
         self.debug_state("Parenthesis Close")
 
-    def input_root(self):
+    def input_function(self,function):
         self.save_state()
         new_compound = Compound([])
-        if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Root)):
+        if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Function)):
             self.expression_tree.expressions[-1].expression.expressions.append(new_compound)
         else:
-            self.expression_tree.expressions.append(Root(new_compound))
+            self.expression_tree.expressions.append(Function(new_compound,function))
         self.stack.append((self.state, self.state_data, self.expression_tree))
         self.expression_tree = new_compound
-        self.state_data = RootInputState(current_value="")
-        self.state = CalculatorState.ROOT_INPUT
-        self.debug_state("Root Input")
+        self.state_data = FunctionInputState(current_value="")
+        self.state = CalculatorState.FUNCTION_INPUT
+        self.debug_state(str(function) + " Input")
 
     def save_state(self):
         self.history.append((
@@ -185,6 +186,10 @@ class FourFunctionCalculator:
         print(f"State Data: {self.state_data}")
         print(f"Expression Tree: {evaluate_expression(self.expression_tree)}")
         print("==============")
+
+    # Define the square root function
+    def sqrt_func(x: str) -> str:        
+        return f"sqrt({x})"
 
 # Running the examples with the updated class and steps.
 calc = FourFunctionCalculator()
@@ -221,9 +226,9 @@ print(evaluate_expression(calc.expression_tree))  # Should print "3+(2*(4+1))+(5
 calc.input_clear()
 calc.input_digit("9")
 calc.input_operator("+")
-calc.input_root()
+calc.input_function(FourFunctionCalculator.sqrt_func)
 calc.input_digit("4")
 calc.input_parenthesis_close()  # Close the root parenthesis
 
 calc.input_equals()
-print(evaluate_expression(calc.expression_tree))  # Should print "9+√(4)"
+print(evaluate_expression(calc.expression_tree))  # Should print "9+sqrt(4)"
