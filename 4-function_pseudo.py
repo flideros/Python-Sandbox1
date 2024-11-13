@@ -222,7 +222,7 @@ calc.input_parenthesis_close()
 calc.input_equals()
 print(evaluate_expression(calc.expression_tree))  # Should print "3+(2*(4+1))+(5-(3+2))"
 
-# Root example: 9 + √(4)
+# Root example: 9 + sqrt(4)
 calc.input_clear()
 calc.input_digit("9")
 calc.input_operator("+")

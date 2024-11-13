@@ -9,6 +9,9 @@ from calculator_domain import (
 from calculator_services import CalculatorServices
 import re
 
+def create_compute(): pass
+
+
 def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, CalculatorInput, str], CalculatorState]:   
     """
     Defines the state handlers and returns a calculate function to route the state to the appropriate handlers.

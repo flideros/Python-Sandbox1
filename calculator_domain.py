@@ -1,7 +1,7 @@
 # ================================================
 # Calculator Domain using a state machine
 # ================================================
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Callable
 from enum import Enum
 from dataclasses import dataclass
 
@@ -171,33 +171,33 @@ class ZeroStateData:
 
 # Expression States
 @dataclass
-class StartState:
+class StartStateData:
     memory: str = ""
 
 @dataclass
-class NumberInputState:
+class NumberInputStateData:
     current_value: str
     memory: str = ""
 
 @dataclass
-class OperatorInputState:
+class OperatorInputStateData:
     previous_value: str
     operator: str
     current_value: str
     memory: str = ""
     
 @dataclass
-class ResultState:
+class ResultStateData:
     result: str
     memory: str = ""
     
 @dataclass
-class ParenthesisOpenState:
+class ParenthesisOpenStateData:
     inner_expression: str
     memory: str = ""
     
 @dataclass
-class FunctionInputState:
+class FunctionInputStateData:
     current_value: str
     memory: str = ""
     
@@ -210,13 +210,13 @@ an empty class (a placeholder) from which other expression types inherit.
 class Expression:
     pass
 '''
-Number:
+Value:
 --Represents a numerical value in the expression.
 --Inherits from Expression.
 --Contains a single field value which is a string representation of the number.
 '''
 @dataclass
-class Number(Expression):
+class Value(Expression):
     value: str
 '''
 Operator:
@@ -261,13 +261,13 @@ class Compound(Expression):
 
 # Catamorphism to Traverse the Expression Tree
 def evaluate_expression(expr: Expression) -> str:
-    if isinstance(expr, Number):
+    if isinstance(expr, Value):
         return expr.value
     elif isinstance(expr, Operator):
         return expr.operator
     elif isinstance(expr, Parenthesis):
         return f"({evaluate_expression(expr.expression)})"
-    elif isinstance(expr, Sqrt):
+    elif isinstance(expr, Function):
         return expr.function(evaluate_expression(expr.expression))
     elif isinstance(expr, Compound):
         return "".join(evaluate_expression(e) for e in expr.expressions)
