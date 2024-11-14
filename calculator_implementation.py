@@ -9,8 +9,25 @@ from calculator_domain import (
 from calculator_services import CalculatorServices
 import re
 
-def create_compute(): pass
-
+def create_compute(): 
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def handle_start_state(state_data: StartStateData, input) -> CalculatorState: pass
+    def compute(input, state) -> Optional[CalculatorState]: pass
+    """
+    Routes the input and state to the appropriate handler and returns the new calculator state.
+    
+    Args:
+        input (CalculatorInput): The input received by the calculator.
+        state (CalculatorState): The current state of the calculator.
+        
+    Returns:
+        Optional[CalculatorState]: The new state of the calculator after processing the input,
+        or None if the input is not handled by any state.
+    """
 
 def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, CalculatorInput, str], CalculatorState]:   
     """
@@ -281,18 +298,17 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
         Returns:
             CalculatorState: The new state of the calculator after processing the input.
         """
-        empty_accumulator_state_data = AccumulatorStateData(digits=" ", pending_op=state_data.pending_op, memory=state_data.memory)
-
         if input == CalculatorInput.ZERO:
-            return ZeroStateData(pending_op=empty_accumulator_state_data.pending_op, memory=state_data.memory)
+            return ZeroStateData(pending_op=None, memory=state_data.memory)
 
         elif isinstance(input, tuple):
             input_type, _input_value = input
             input_value = _input_value.value
         
             if input_type == 'DIGIT':
-                new_digits = services["accumulate_non_zero_digit"](input[1], " ")
-                return AccumulatorStateData(digits=new_digits, pending_op=state_data.pending_op, memory=state_data.memory)
+                new_digits = services["accumulate_non_zero_digit"](input_value, " ")
+                print("result of input: " + new_digits)
+                return AccumulatorStateData(digits=new_digits, pending_op=None, memory=state_data.memory)
             
             elif input_type == 'MATHOP':   
                 if _input_value in [CalculatorMathOp.DIVIDE, CalculatorMathOp.MULTIPLY, CalculatorMathOp.SUBTRACT, CalculatorMathOp.ADD]:
@@ -300,7 +316,8 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
                     pending_op = (next_op, state_data.display_number)
                     return ZeroStateData(pending_op=pending_op, memory=state_data.memory)
                 
-                elif input_value == CalculatorMathOp.MEMORYADD:
+                elif _input_value == CalculatorMathOp.MEMORYADD:
+                    print("enter Memory add")
                     d = state_data.display_number                
                     try: e = float(state_data.memory)
                     except ValueError: e = None
@@ -354,7 +371,7 @@ def create_calculate(services: CalculatorServices)-> Callable[[CalculatorState, 
                     return ComputedStateData(display_number = math_result.success, memory=state_data.memory)          
             
         elif input == CalculatorInput.DECIMALSEPARATOR:
-            new_accumulator_data = AccumulatorStateData(digits="0.", pending_op=state_data.pending_op, memory=state_data.memory)
+            new_accumulator_data = AccumulatorStateData(digits="0.", pending_op=None, memory=state_data.memory)
             print(f"Decimal added to accumulator: {new_digits}")
             return new_accumulator_data
         

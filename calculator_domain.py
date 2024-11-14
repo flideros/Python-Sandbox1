@@ -81,6 +81,79 @@ class CalculatorMathOp(Enum):
 # Type alias for a tuple representing a pending operation and its associated number
 PendingOp = Tuple[CalculatorMathOp, Number]
 
+# Expression Tree Data Structure
+'''
+Expression: This is the base class for all types of expressions. It's defined as
+an empty class (a placeholder) from which other expression types inherit.
+'''
+@dataclass
+class Expression:
+    pass
+'''
+Value:
+--Represents a numerical value in the expression.
+--Inherits from Expression.
+--Contains a single field value which is a string representation of the number.
+'''
+@dataclass
+class Value(Expression):
+    value: str
+'''
+Operator:
+--Represents an operator (e.g., +, -, *, /) in the expression.
+--Inherits from Expression.
+--Contains a single field operator which is a string representing the operator.
+'''
+@dataclass
+class Operator(Expression):
+    operator: str
+'''
+Parenthesis:
+--Represents an expression enclosed in parentheses.
+--Inherits from Expression.
+--Contains a single field expression which is another Expression type,
+  indicating the expression within the parentheses.
+'''
+@dataclass
+class Parenthesis(Expression):
+    expression: 'Expression'
+'''
+Function:
+--Represents a function application to an argument.
+--Inherits from Expression.
+--This field holds a callable function that takes a string representation of an
+  expression and returns a string. This allows you to define any mathematical
+  function (e.g., square root, sine, cosine) and apply it to the expression.
+'''
+@dataclass
+class Function(Expression):
+    expression: 'Expression'
+    function: Callable[[str], str]
+'''
+Compound:
+--Represents a compound expression composed of multiple sub-expressions.
+--Inherits from Expression.
+--Contains a single field expressions which is a list of Expression objects.
+'''
+@dataclass
+class Compound(Expression):
+    expressions: List[Expression]
+
+# Catamorphism to Traverse the Expression Tree
+def evaluate_expression(expr: Expression) -> str:
+    if isinstance(expr, Value):
+        return expr.value
+    elif isinstance(expr, Operator):
+        return expr.operator
+    elif isinstance(expr, Parenthesis):
+        return f"({evaluate_expression(expr.expression)})"
+    elif isinstance(expr, Function):
+        return expr.function(evaluate_expression(expr.expression))
+    elif isinstance(expr, Compound):
+        return "".join(evaluate_expression(e) for e in expr.expressions)
+    else:
+        raise ValueError("Unknown Expression Type")
+
 class MathOperationError(Enum):
     """
     Constants for various math operation errors.
@@ -172,12 +245,16 @@ class ZeroStateData:
 # Expression States
 @dataclass
 class StartStateData:
-    memory: str = ""
+    memory: str = ""    
+    history = []    
 
 @dataclass
 class NumberInputStateData:
     current_value: str
     memory: str = ""
+    history = []
+    expression_tree = Compound([])    
+    stack = []
 
 @dataclass
 class OperatorInputStateData:
@@ -185,91 +262,30 @@ class OperatorInputStateData:
     operator: str
     current_value: str
     memory: str = ""
+    history = []
+    expression_tree = Compound([])    
+    stack = []
     
 @dataclass
 class ResultStateData:
     result: str
     memory: str = ""
+    history = []   
     
 @dataclass
 class ParenthesisOpenStateData:
     inner_expression: str
     memory: str = ""
+    history = []
+    stack = []
+    expression_tree = Compound([])  
     
 @dataclass
 class FunctionInputStateData:
     current_value: str
     memory: str = ""
+    history = []
+    stack = []
+    expression_tree = Compound([])
     
-# Expression Tree Data Structure
-'''
-Expression: This is the base class for all types of expressions. It's defined as
-an empty class (a placeholder) from which other expression types inherit.
-'''
-@dataclass
-class Expression:
-    pass
-'''
-Value:
---Represents a numerical value in the expression.
---Inherits from Expression.
---Contains a single field value which is a string representation of the number.
-'''
-@dataclass
-class Value(Expression):
-    value: str
-'''
-Operator:
---Represents an operator (e.g., +, -, *, /) in the expression.
---Inherits from Expression.
---Contains a single field operator which is a string representing the operator.
-'''
-@dataclass
-class Operator(Expression):
-    operator: str
-'''
-Parenthesis:
---Represents an expression enclosed in parentheses.
---Inherits from Expression.
---Contains a single field expression which is another Expression type,
-  indicating the expression within the parentheses.
-'''
-@dataclass
-class Parenthesis(Expression):
-    expression: 'Expression'
-'''
-Function:
---Represents a function application to an argument.
---Inherits from Expression.
---This field holds a callable function that takes a string representation of an
-  expression and returns a string. This allows you to define any mathematical
-  function (e.g., square root, sine, cosine) and apply it to the expression.
-'''
-@dataclass
-class Function(Expression):
-    expression: 'Expression'
-    function: Callable[[str], str]
-'''
-Compound:
---Represents a compound expression composed of multiple sub-expressions.
---Inherits from Expression.
---Contains a single field expressions which is a list of Expression objects.
-'''
-@dataclass
-class Compound(Expression):
-    expressions: List[Expression]
-
-# Catamorphism to Traverse the Expression Tree
-def evaluate_expression(expr: Expression) -> str:
-    if isinstance(expr, Value):
-        return expr.value
-    elif isinstance(expr, Operator):
-        return expr.operator
-    elif isinstance(expr, Parenthesis):
-        return f"({evaluate_expression(expr.expression)})"
-    elif isinstance(expr, Function):
-        return expr.function(evaluate_expression(expr.expression))
-    elif isinstance(expr, Compound):
-        return "".join(evaluate_expression(e) for e in expr.expressions)
-    else:
-        raise ValueError("Unknown Expression Type")
+    
