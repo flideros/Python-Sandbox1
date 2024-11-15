@@ -1,11 +1,12 @@
 # ================================================
 # UI for Ten Key Input and Display
 # ================================================
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QGridLayout, QPushButton, QLabel, QWidget, QStyle
-from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QGridLayout, QPushButton, QLabel, QWidget, QStyle, QFrame
+from PyQt6.QtGui import QFont, QIcon, QMouseEvent
+from PyQt6.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
 from calculator_services import CalculatorServices
-from calculator_implementation import create_calculate
+from compute_services import ComputeServices
+from calculator_implementation import create_calculate, create_compute
 from enum import Enum
 
 class TenKeyConfig(Enum):
@@ -16,6 +17,9 @@ class TenKeyConfig(Enum):
    
    
 class TenKey(QWidget):
+    # Define custom signals
+    buttonClicked = pyqtSignal(str)
+    
     def __init__(self, config='default'):
         super().__init__()
         
@@ -32,7 +36,7 @@ class TenKey(QWidget):
         self.get_display_from_state = services["get_display_from_state"]
         self.get_pending_op_from_state = services["get_pending_op_from_state"]
         self.get_memo_from_state = services["get_memo_from_state"]
-
+        
         # Initial state
         self.state = CalculatorServices.initial_state
         QIcon.setThemeName("Papirus")
@@ -101,6 +105,7 @@ class TenKey(QWidget):
             back_button.setStyleSheet(button_style)
             self.grid.addWidget(back_button, r, c)
             back_button.clicked.connect(self.create_handler('←'))
+            back_button.clicked.connect(self.handleButtonClick)
         
         def python_icon():
             # Adding python icon to empty grid space
@@ -152,6 +157,7 @@ class TenKey(QWidget):
             button.setFont(QFont('Arial', 14))
             self.grid.addWidget(button, row, col)
             button.clicked.connect(self.create_handler(text))
+            button.clicked.connect(self.handleButtonClick)
     
     # Function to bind handler to an action
     def create_handler(self, text):
@@ -214,14 +220,50 @@ class TenKey(QWidget):
             }
         if key in key_mapping:
             self.handle_input(key_mapping[key])
-
+    
+    def handleButtonClick(self):
+        display = self.result.text()
+        print(f"10-Key queried display: {display}")
+        self.buttonClicked.emit(display)
+from calculator_domain import CalculatorInput
 class TenKeyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
         self.setWindowTitle("Ten Key Input and Display")
-        self.setGeometry(100, 100, 400, 200)
+        self.setGeometry(100, 100, 400, 200) 
         self.ten_key = TenKey('default')
-        self.setCentralWidget(self.ten_key)
+        self.ten_key.buttonClicked.connect(self.handleButtonClicked)
+        
+        services = ComputeServices()
+        self.services = services
+        self.state = self.services.initial_state
+        self.compute = create_compute(services)
+                
+        self.send_ten_key_display = self.services.receive_ten_key_display
+        self.get_digit_display = self.services.get_digit_display
+               
+        self.vbox = QVBoxLayout()
+        self.label = QLabel('This is a label', self)
+        self.vbox.addWidget(self.label)
+        self.vbox.addWidget(self.ten_key)
+        self.frame = QFrame()
+        self.frame.setLayout(self.vbox)
+        
+        self.setCentralWidget(self.frame)
+
+    @pyqtSlot(str)
+    def handleButtonClicked(self, text: str):
+        print(f"Button clicked: {text}")
+        self.send_ten_key_display(text)        
+        self.query_digit_display()
+        self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
+        
+        self.state = self.compute(CalculatorInput.ZERO, self.state)
+        print(f"state: {self.state}")
+        
+    def query_digit_display(self) -> str:
+        return self.get_digit_display()
 
 # Standalone example entry point
 if __name__ == "__main__":

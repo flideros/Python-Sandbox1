@@ -3,21 +3,22 @@
 # ================================================
 from typing import Optional, Tuple, Union, Dict, Callable
 from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number, CalculatorMathOp,
-                               ErrorStateData, AccumulatorStateData, StartStateData,  NumberInputStateData,
+                               ErrorStateData, StartStateData,  NumberInputStateData,
                                OperatorInputStateData, ResultStateData, ParenthesisOpenStateData, FunctionInputStateData)
 import math
 
-class ComputeServices:
-    #pass
-    def get_number_from_accumulator(self, accumulator_state_data) -> Number:
-        """
-        Converts the digits in the accumulator to a float number.
-        """
-        try:
-            return float(accumulator_state_data.digits)
-        except ValueError:
-            return 0.0
-        
+class ComputeServices:    
+    def __init__(self):
+        super().__init__()
+        self.digit_display = " "   
+    
+    def receive_ten_key_display(self, display: str):
+        self.digit_display = display
+        print(f"Service received ten key display: {display}")
+                
+    def get_digit_display(self):
+        return self.digit_display
+    
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
@@ -48,7 +49,7 @@ class ComputeServices:
     """
     Returns the initial state of the calculator.
     """
-    initial_state = StartStateData(memory=" ")
+    initial_state = StartStateData()
     """
     Returns a dictionary of charachter mappings to calculator inputs
     """
@@ -58,29 +59,5 @@ class ComputeServices:
             '*': (CalculatorInput.MATHOP, CalculatorMathOp.MULTIPLY),
             '/': (CalculatorInput.MATHOP, CalculatorMathOp.DIVIDE),
             '=': (CalculatorInput.EQUALS, None),
-            '√': (CalculatorInput.MATHOP, CalculatorMathOp.ROOT),
-
-        }
-    
-    """
-    Returns a dictionary of charachter mappings to calculator inputs
-    """
-    @staticmethod
-    
-    def create_services() -> Dict[str, Callable]:
-        """
-        Creates and returns a dictionary of compute service functions.
-        Each service function is mapped to a corresponding key, allowing for
-        easy access and invocation of various calculator operations such as
-        digit accumulation, mathematical operations, and state retrieval.
-            
-        Returns:
-            dict: A dictionary with the following keys and corresponding service functions:
-            - "get_number_from_accumulator": Function to convert accumulator to a number.
-            - "get_display_from_state": Function to retrieve display string from calculator state.
-        """
-        services = CalculatorServices()
-        return {
-            "get_number_from_accumulator": services.get_number_from_accumulator,
-            "get_display_from_state": services.get_display_from_state("ERROR:")
+            '√': (CalculatorInput.MATHOP, CalculatorMathOp.ROOT)
         }

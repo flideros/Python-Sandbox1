@@ -3,7 +3,7 @@
 # ================================================
 from typing import Optional, Tuple, Union, List, Callable
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Type aliases for better readability
 Number = float
@@ -137,7 +137,7 @@ Compound:
 '''
 @dataclass
 class Compound(Expression):
-    expressions: List[Expression]
+    expressions: List[Expression] = field(default_factory=list)
 
 # Catamorphism to Traverse the Expression Tree
 def evaluate_expression(expr: Expression) -> str:
@@ -246,46 +246,47 @@ class ZeroStateData:
 @dataclass
 class StartStateData:
     memory: str = ""    
-    history = []    
+    history: list = field(default_factory=list)    
 
 @dataclass
 class NumberInputStateData:
     current_value: str
+    expression_tree: Compound()
     memory: str = ""
-    history = []
-    expression_tree = Compound([])    
-    stack = []
+    history: list = field(default_factory=list)    
+    stack: list = field(default_factory=list)
 
 @dataclass
 class OperatorInputStateData:
     previous_value: str
     operator: str
     current_value: str
-    memory: str = ""
-    history = []
-    expression_tree = Compound([])    
-    stack = []
+    expression_tree: Compound()
+    memory: str = " "
+    history: list = field(default_factory=list)
+    stack: list = field(default_factory=list)
     
 @dataclass
 class ResultStateData:
     result: str
-    memory: str = ""
-    history = []   
+    memory: str = " "
+    history: list = field(default_factory=list)   
     
 @dataclass
 class ParenthesisOpenStateData:
     inner_expression: str
-    memory: str = ""
-    history = []
-    stack = []
-    expression_tree = Compound([])  
+    expression_tree: Compound()
+    memory: str = " "
+    history: list = field(default_factory=list)
+    stack: list = field(default_factory=list)
     
 @dataclass
 class FunctionInputStateData:
     current_value: str
-    memory: str = ""
-    history = []
-    stack = []
-    expression_tree = Compound([])
+    expression_tree: Compound()
+    memory: str = " "
+    history: list = field(default_factory=list)
+    stack: list = field(default_factory=list)
+    
     
     
