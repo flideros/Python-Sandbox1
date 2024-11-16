@@ -9,6 +9,7 @@ from compute_services import ComputeServices
 from calculator_implementation import create_calculate, create_compute
 from enum import Enum
 
+
 class TenKeyConfig(Enum):
    DEFAULT = 'default' # 10 digits, back, clear entry, decimal
    DIGITS_ONLY = 'digits_only' # 10 digits
@@ -19,10 +20,10 @@ class TenKeyConfig(Enum):
 class TenKey(QWidget):
     # Define custom signals
     buttonClicked = pyqtSignal(str)
+    inputClicked = pyqtSignal(object)
     
     def __init__(self, config='default'):
-        super().__init__()
-        
+        super().__init__()        
         # Set the Ten Key configuration
         self.config = TenKeyConfig(config)
         
@@ -105,7 +106,7 @@ class TenKey(QWidget):
             back_button.setStyleSheet(button_style)
             self.grid.addWidget(back_button, r, c)
             back_button.clicked.connect(self.create_handler('←'))
-            back_button.clicked.connect(self.handleButtonClick)
+            back_button.clicked.connect(self.handle_button_clicked)                        
         
         def python_icon():
             # Adding python icon to empty grid space
@@ -157,7 +158,8 @@ class TenKey(QWidget):
             button.setFont(QFont('Arial', 14))
             self.grid.addWidget(button, row, col)
             button.clicked.connect(self.create_handler(text))
-            button.clicked.connect(self.handleButtonClick)
+            button.clicked.connect(self.handle_button_clicked)
+                        
     
     # Function to bind handler to an action
     def create_handler(self, text):
@@ -165,11 +167,16 @@ class TenKey(QWidget):
             self.handle_input(text)
         return handler
 
+    def handle_button_clicked(self):
+        display = self.result.text()
+        print(f"10-Key queried display: {display}")
+        self.buttonClicked.emit(display)         
+    
     # Function to route action to a handler
-    def handle_input(self, input_text):
+    def handle_input(self, input_text):        
         input_mapping = CalculatorServices.ten_key_input_mapping        
         input_action, param = input_mapping.get(input_text, (None, None))
-        
+                        
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
@@ -177,10 +184,13 @@ class TenKey(QWidget):
         print("Current state:", self.state)
         
         if input_action is not None:            
-            self.state = self.calculate(input_action, self.state)
+            self.state = self.calculate(input_action, self.state)            
+            self.inputClicked.emit(input_action)            
+            
+            print(f"Emitted signal: {f'{input_action}'}")    
             
         self.update_display()
-
+    
     # Function to display current state
     def update_display(self):
         print("==============")
@@ -221,10 +231,6 @@ class TenKey(QWidget):
         if key in key_mapping:
             self.handle_input(key_mapping[key])
     
-    def handleButtonClick(self):
-        display = self.result.text()
-        print(f"10-Key queried display: {display}")
-        self.buttonClicked.emit(display)
 from calculator_domain import CalculatorInput
 class TenKeyWindow(QMainWindow):
     def __init__(self):
@@ -234,11 +240,13 @@ class TenKeyWindow(QMainWindow):
         self.setGeometry(100, 100, 400, 200) 
         self.ten_key = TenKey('default')
         self.ten_key.buttonClicked.connect(self.handleButtonClicked)
+        self.ten_key.inputClicked.connect(lambda x: self.handleInputClicked(x))
         
         services = ComputeServices()
         self.services = services
         self.state = self.services.initial_state
         self.compute = create_compute(services)
+        self.current_input = None
                 
         self.send_ten_key_display = self.services.receive_ten_key_display
         self.get_digit_display = self.services.get_digit_display
@@ -253,13 +261,20 @@ class TenKeyWindow(QMainWindow):
         self.setCentralWidget(self.frame)
 
     @pyqtSlot(str)
-    def handleButtonClicked(self, text: str):
+    def handleInputClicked(self, input):        
+        input_mapping = CalculatorServices.input_mapping        
+        input_action, param = input_mapping.get(self.ten_key.inputClicked, (None, None))
+        self.current_input = input
+        print(f"Input clicked: {input}")
+    
+    @pyqtSlot(str)
+    def handleButtonClicked(self, text: str):        
         print(f"Button clicked: {text}")
         self.send_ten_key_display(text)        
         self.query_digit_display()
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
+        self.state = self.compute(self.current_input, self.state)
         
-        self.state = self.compute(CalculatorInput.ZERO, self.state)
         print(f"state: {self.state}")
         
     def query_digit_display(self) -> str:

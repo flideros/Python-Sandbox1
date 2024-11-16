@@ -10,16 +10,19 @@ from calculator_domain import (
 )
 from calculator_services import CalculatorServices
 from compute_services import ComputeServices
+from dataclasses import dataclass, field
 import re
 
 def create_compute(services: ComputeServices)-> Callable[[CalculatorState, CalculatorInput, str], CalculatorState]: 
     
     def handle_start_state(state_data: StartStateData, input) -> CalculatorState: 
-    
+        
         if input == CalculatorInput.ZERO:
             print("Zero Input - Transition to NumberInputState")
-            digits = services.digit_display
-            return NumberInputStateData(current_value = digits, expression_tree = Compound([]))
+            digits = services.get_digit_display()
+            return NumberInputStateData(current_value = digits,
+                                        expression_tree = Compound([]),
+                                        memory = state_data.memory)
         
         elif isinstance(input, tuple):
             input_type, _input_value = input
@@ -27,16 +30,36 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
                 print("Digit Input - Transition to NumberInputState")
-                digits = services.digit_display
+                digits = services.get_digit_display()
+                print(f"Digit Input {digits}")
                 return NumberInputStateData(current_value = digits,
                                             expression_tree = Compound([]),
-                                            stack = [],
-                                            memory=state_data.memory,
-                                            history = state_data.history)
+                                            memory = state_data.memory)
     
         return state_data  # Return the current state if no condition matches    
     
-    def handle_number_input_state(state_data: NumberInputStateData, input) -> CalculatorState: pass
+    def handle_number_input_state(state_data: NumberInputStateData, input) -> CalculatorState:
+        if input == CalculatorInput.ZERO:
+            print("Zero Input - Transition to NumberInputState")
+            digits = services.get_digit_display()
+            return NumberInputStateData(current_value = digits,
+                                        expression_tree = Compound([]),
+                                        memory = state_data.memory)
+        
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+        
+            if input_type == 'DIGIT' and input_value in range(1, 10):
+                print("Digit Input - Transition to NumberInputState")
+                digits = services.get_digit_display()
+                print(f"Digit Input {digits}")
+                return NumberInputStateData(current_value = digits,
+                                            expression_tree = Compound([]),
+                                            memory = state_data.memory)
+    
+        return state_data  # Return the current state if no condition matches
+    
     def handle_operator_input_state(state_data: OperatorInputStateData, input) -> CalculatorState: pass
     def handle_parenthesis_open_state(state_data: ParenthesisOpenStateData, input) -> CalculatorState: pass
     def handle_function_input_state(state_data: FunctionInputStateData, input) -> CalculatorState: pass

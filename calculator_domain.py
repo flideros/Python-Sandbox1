@@ -245,15 +245,14 @@ class ZeroStateData:
 # Expression States
 @dataclass
 class StartStateData:
-    memory: str = ""    
-    history: list = field(default_factory=list)    
+    memory: str = " "    
+    
 
 @dataclass
 class NumberInputStateData:
     current_value: str
     expression_tree: Compound()
-    memory: str = ""
-    history: list = field(default_factory=list)    
+    memory: str = ""       
     stack: list = field(default_factory=list)
 
 @dataclass
@@ -262,30 +261,26 @@ class OperatorInputStateData:
     operator: str
     current_value: str
     expression_tree: Compound()
-    memory: str = " "
-    history: list = field(default_factory=list)
+    memory: str = " "    
     stack: list = field(default_factory=list)
     
 @dataclass
 class ResultStateData:
     result: str
-    memory: str = " "
-    history: list = field(default_factory=list)   
+    memory: str = " "    
     
 @dataclass
 class ParenthesisOpenStateData:
     inner_expression: str
     expression_tree: Compound()
-    memory: str = " "
-    history: list = field(default_factory=list)
+    memory: str = " "    
     stack: list = field(default_factory=list)
     
 @dataclass
 class FunctionInputStateData:
     current_value: str
     expression_tree: Compound()
-    memory: str = " "
-    history: list = field(default_factory=list)
+    memory: str = " "    
     stack: list = field(default_factory=list)
     
     

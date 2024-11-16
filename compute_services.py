@@ -15,9 +15,10 @@ class ComputeServices:
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
         print(f"Service received ten key display: {display}")
-                
+                 
     def get_digit_display(self):
-        return self.digit_display
+        out = self.digit_display
+        return out
     
     def get_display_from_state(self, error_msg: str):
         """
