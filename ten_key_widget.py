@@ -6,7 +6,8 @@ from PyQt6.QtGui import QFont, QIcon, QMouseEvent
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
 from calculator_services import CalculatorServices
 from compute_services import ComputeServices
-from calculator_implementation import create_calculate, create_compute
+from calculator_implementation import create_calculate
+from compute_implementation import create_compute
 from enum import Enum
 
 
@@ -42,9 +43,9 @@ class TenKey(QWidget):
         self.state = CalculatorServices.initial_state
         QIcon.setThemeName("Papirus")
 
-        print("==============")
+        print("=======Ten Key Input and Display=======")
         print("Initial state:", self.state)
-        print("==============")
+        print("=======================================")
 
         # ------Create Constants and Widgets---------
         # Constants for Styles
@@ -169,7 +170,7 @@ class TenKey(QWidget):
 
     def handle_button_clicked(self):
         display = self.result.text()
-        print(f"10-Key queried display: {display}")
+        print(f"10-Key widget queried display: {display}")
         self.buttonClicked.emit(display)         
     
     # Function to route action to a handler
@@ -193,12 +194,12 @@ class TenKey(QWidget):
     
     # Function to display current state
     def update_display(self):
-        print("==============")
+        print("=======Ten Key Input and Display=======")
         print("Output State:", self.state)
         print("Display Text:", self.get_display_from_state(self.state))
         print("Pending Op Text:", self.get_pending_op_from_state(self.state))
         print("Memo Text:", self.get_memo_from_state(self.state))
-        print("==============")
+        print("=======================================")
         self.result.setText(self.get_display_from_state(self.state))
         
     def keyPressEvent(self, event):
@@ -230,8 +231,8 @@ class TenKey(QWidget):
             }
         if key in key_mapping:
             self.handle_input(key_mapping[key])
+            self.handle_button_clicked()
     
-from calculator_domain import CalculatorInput
 class TenKeyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -269,13 +270,13 @@ class TenKeyWindow(QMainWindow):
     
     @pyqtSlot(str)
     def handleButtonClicked(self, text: str):        
-        print(f"Button clicked: {text}")
+        print(f"Ten Key Window Button clicked: {text}")
         self.send_ten_key_display(text)        
         self.query_digit_display()
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
         self.state = self.compute(self.current_input, self.state)
         
-        print(f"state: {self.state}")
+        print(f"Ten Key Window state: {self.state}")
         
     def query_digit_display(self) -> str:
         return self.get_digit_display()
