@@ -43,7 +43,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             print("Zero Input - Transition to NumberInputState")
             digits = services.get_digit_display()
             return NumberInputStateData(current_value = digits,
-                                        expression_tree = Compound([]),
+                                        expression_tree = state_data.expression_tree,
                                         memory = state_data.memory)
         
         elif isinstance(input, tuple):
@@ -56,7 +56,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 print(f"Digit Input {digits}")
                 return NumberInputStateData(current_value = digits,
                                             expression_tree = Compound([]),
-                                            memory = state_data.memory)
+                                            memory = state_data.expression_tree)
     
         return state_data  # Return the current state if no condition matches
     

@@ -10,13 +10,12 @@ from calculator_implementation import create_calculate
 from compute_implementation import create_compute
 from enum import Enum
 
-
 class TenKeyConfig(Enum):
    DEFAULT = 'default' # 10 digits, back, clear entry, decimal
    DIGITS_ONLY = 'digits_only' # 10 digits
    DIGITS_CE_BACK = 'digits_ce_back' # 10 digits, back, clear entry
    DIGITS_CE_DECIMAL = 'digits_ce_decimal' # 10 digits, clear entry, decimal
-   
+   DIGITS_MR_DECIMAL = 'digits_mr_decimal' # 10 digits, memory recall, decimal
    
 class TenKey(QWidget):
     # Define custom signals
@@ -50,7 +49,8 @@ class TenKey(QWidget):
         # ------Create Constants and Widgets---------
         # Constants for Styles
         grid_color = "#F5F5DC"         
-        background_color = "#F6F7F9"          
+        background_color = "#F6F7F9"
+        memory_recall = "#8FBC8F"
         BUTTON_PADDING = "5px"
         BUTTON_FONT_SIZE = "14pt"
         BORDER_RADIUS = "5px"
@@ -76,7 +76,17 @@ class TenKey(QWidget):
                 border: 1px solid {HOVER_COLOR};
             }}
         """
-        
+        # Style for Memory Recall Button
+        button_style_recall = f"""
+            QPushButton {{
+                {button_style_base}
+                background-color: {memory_recall};
+            }}
+            QPushButton:hover {{
+                background-color: {memory_recall};
+                border: 1px solid {HOVER_COLOR};
+            }}
+        """
         # Main Layout
         main_layout = QVBoxLayout()        
         self.grid = QGridLayout()
@@ -93,10 +103,10 @@ class TenKey(QWidget):
         self.grid.addWidget(self.result, 0, 0, 1, 3)
                         
         # Call to setup buttons
-        self.setup_buttons(button_style)
+        self.setup_buttons(button_style, button_style_recall)
         
     # ------Create Functions---------    
-    def setup_buttons(self, button_style):
+    def setup_buttons(self, button_style, button_style_recall):
         # Buttons
         def back_button(r,c):
             # Adding backspace button separately to set icon        
@@ -153,9 +163,19 @@ class TenKey(QWidget):
             ]
             back_button(5,2)
             
+        elif self.config == TenKeyConfig.DIGITS_MR_DECIMAL:
+            buttons = [
+                ('1', 4, 0), ('2', 4, 1), ('3', 4, 2),
+                ('4', 3, 0), ('5', 3, 1), ('6', 3, 2),
+                ('7', 2, 0), ('8', 2, 1), ('9', 2, 2),
+                ('0', 5, 0), ('.', 5, 1), ('MR', 5, 2)
+            ]            
         for (text, row, col) in buttons:            
             button = QPushButton(text)
-            button.setStyleSheet(button_style)
+            if text == 'MR':
+                button.setStyleSheet(button_style_recall)
+            else:
+                button.setStyleSheet(button_style)
             button.setFont(QFont('Arial', 14))
             self.grid.addWidget(button, row, col)
             button.clicked.connect(self.create_handler(text))
@@ -229,6 +249,12 @@ class TenKey(QWidget):
                 Qt.Key.Key_4: '4', Qt.Key.Key_5: '5', Qt.Key.Key_6: '6', Qt.Key.Key_7: '7',
                 Qt.Key.Key_8: '8', Qt.Key.Key_9: '9', Qt.Key.Key_Delete: 'CE', Qt.Key.Key_Backspace: '←'
             }
+        elif self.config == TenKeyConfig.DIGITS_MR_DECIMAL:
+            key_mapping = {
+                Qt.Key.Key_0: '0', Qt.Key.Key_1: '1', Qt.Key.Key_2: '2', Qt.Key.Key_3: '3',
+                Qt.Key.Key_4: '4', Qt.Key.Key_5: '5', Qt.Key.Key_6: '6', Qt.Key.Key_7: '7',
+                Qt.Key.Key_8: '8', Qt.Key.Key_9: '9', Qt.Key.Key_Period: '.'
+            }
         if key in key_mapping:
             self.handle_input(key_mapping[key])
             self.handle_button_clicked()
@@ -240,46 +266,7 @@ class TenKeyWindow(QMainWindow):
         self.setWindowTitle("Ten Key Input and Display")
         self.setGeometry(100, 100, 400, 200) 
         self.ten_key = TenKey('default')
-        self.ten_key.buttonClicked.connect(self.handleButtonClicked)
-        self.ten_key.inputClicked.connect(lambda x: self.handleInputClicked(x))
-        
-        services = ComputeServices()
-        self.services = services
-        self.state = self.services.initial_state
-        self.compute = create_compute(services)
-        self.current_input = None
-                
-        self.send_ten_key_display = self.services.receive_ten_key_display
-        self.get_digit_display = self.services.get_digit_display
-               
-        self.vbox = QVBoxLayout()
-        self.label = QLabel('This is a label', self)
-        self.vbox.addWidget(self.label)
-        self.vbox.addWidget(self.ten_key)
-        self.frame = QFrame()
-        self.frame.setLayout(self.vbox)
-        
-        self.setCentralWidget(self.frame)
-
-    @pyqtSlot(str)
-    def handleInputClicked(self, input):        
-        input_mapping = CalculatorServices.input_mapping        
-        input_action, param = input_mapping.get(self.ten_key.inputClicked, (None, None))
-        self.current_input = input
-        print(f"Input clicked: {input}")
-    
-    @pyqtSlot(str)
-    def handleButtonClicked(self, text: str):        
-        print(f"Ten Key Window Button clicked: {text}")
-        self.send_ten_key_display(text)        
-        self.query_digit_display()
-        self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
-        self.state = self.compute(self.current_input, self.state)
-        
-        print(f"Ten Key Window state: {self.state}")
-        
-    def query_digit_display(self) -> str:
-        return self.get_digit_display()
+        self.setCentralWidget(self.ten_key)
 
 # Standalone example entry point
 if __name__ == "__main__":
