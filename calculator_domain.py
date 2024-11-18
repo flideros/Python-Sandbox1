@@ -39,9 +39,16 @@ class CalculatorInput(Enum):
     CLEAR = "CLEAR"
     CLEARENTRY = "CLEARENTRY"
     BACK = "BACK"
+    UNDO = "UNDO"
+    REDO = "REDO"
+    PARENOPEN = "PARENOPEN"
+    PARENCLOSE = "PARENCLOSE"
+    RETURN = "RETURN"
+    FUNCTION = lambda func: ('FUNCTION', func)
     MEMORYSTORE = "MEMORYSTORE"
     MEMORYCLEAR = "MEMORYCLEAR"
     MEMORYRECALL = "MEMORYRECALL"
+    
     
     def __call__(self, *args):
         if callable(self.value):
@@ -77,6 +84,14 @@ class CalculatorMathOp(Enum):
     CHANGESIGN = 8
     MEMORYADD = 9
     MEMORYSUBTRACT = 10
+    
+class MathFunction(Enum):
+    """
+    Enumeration for mathematical functions.
+    """
+    SQRT = 1
+    SQUARE = 2
+    # 
 
 # Type alias for a tuple representing a pending operation and its associated number
 PendingOp = Tuple[CalculatorMathOp, Number]

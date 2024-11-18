@@ -1,7 +1,7 @@
 # ================================================
 # UI for Ten Key Input and Display
 # ================================================
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QGridLayout, QPushButton, QLabel, QWidget, QStyle, QFrame
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QGridLayout, QPushButton, QLabel, QWidget, QStyle, QSizePolicy
 from PyQt6.QtGui import QFont, QIcon, QMouseEvent
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, pyqtSlot
 from calculator_services import CalculatorServices
