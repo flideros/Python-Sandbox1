@@ -27,6 +27,9 @@ class FourFunctionCalculator(QWidget):
                 
         self.send_ten_key_display = self.services.receive_ten_key_display
         self.get_digit_display = self.services.get_digit_display
+        
+        # Dictionary to store buttons with (row, column) as key
+        self.buttons = {}
   
         # ------Create Constants and Widgets---------
         # Constants for Styles
@@ -86,6 +89,14 @@ class FourFunctionCalculator(QWidget):
                 background-color: {BUTTON_COLOR};
                 border: 1px solid {BORDER_COLOR};
                 selection-background-color: {HOVER_COLOR};
+                selection-color: black; 
+            }}
+            QComboBox QAbstractItemView::item:selected {{
+                color: black; 
+            }}
+            QComboBox QAbstractItemView::item:hover {{
+                color: black; 
+                background-color: lightgray; 
             }}
         """
         # Main layout
@@ -98,8 +109,10 @@ class FourFunctionCalculator(QWidget):
         
         # Create Choice combo box
         self.combo_box = QComboBox()
-        self.combo_box.addItem("Sqrt")
-        self.combo_box.addItem("Power")
+        self.combo_box.addItem("Select")
+        self.combo_box.addItems(["Sqrt", "Power"])
+        self.combo_box.setStyleSheet(combo_box_style)
+        self.combo_box.currentTextChanged.connect(self.update_button_text)
         
         self.combo_box.setStyleSheet(combo_box_style)
         
@@ -135,7 +148,6 @@ class FourFunctionCalculator(QWidget):
 
     # ------Create Functions---------    
     def setup_function_buttons(self, button_style):        
-        
         function_buttons = [
             ('/', 0, 0), ('(', 0, 1), 
             ('*', 1, 0), (')', 1, 1),
@@ -145,10 +157,14 @@ class FourFunctionCalculator(QWidget):
         for (text, row, col) in function_buttons:            
             button = QPushButton(text)
             button.setStyleSheet(button_style)
-            button.setFont(QFont('Arial', 14))            
+            button.setFont(QFont('Arial', 14))
+            if text == 'FUNC':
+                button.setEnabled(False) # Initially disabled
+                button.setToolTip("Select a function first")
             self.function_button_grid_layout.addWidget(button, row, col)
             #button.clicked.connect(self.create_handler(text))
-            #button.clicked.connect(self.handle_button_clicked)        
+            #button.clicked.connect(self.handle_button_clicked)
+            self.buttons[(row, col)] = button
             
     def setup_utility_buttons(self, button_style):        
         def back_button(r,c):
@@ -175,6 +191,14 @@ class FourFunctionCalculator(QWidget):
             self.utility_button_grid_layout.addWidget(button, row, col)
             #button.clicked.connect(self.create_handler(text))
             #button.clicked.connect(self.handle_button_clicked
+
+    def update_button_text(self, text):
+        if text != "Select":
+            button = self.buttons[(2, 1)]
+            self.buttons[(2, 1)].setText(text)
+            self.buttons[(2, 1)].setEnabled(True) # Enable the button when a function is selected
+            self.buttons[(2, 1)].setToolTip("") # Remove the tooltip when active
+            self.combo_box.setCurrentIndex(0) # Reset the combo box to display "Select"
 
     @pyqtSlot(str)
     def handleInputClicked(self, input):        
