@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuill in PyQt6</title>
+    <link rel="stylesheet" href="/home/frank/Documents/Code/resources/mathquill.min.css" />
+    <style>
+        #mathquill-input {
+            width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            min-height: 50px; /* Ensure it's clickable */
+        }
+    </style>
+</head>
+<body>
+    <div id="mathquill-input" class="mathquill-editable"></div>
+    <div id="latex-output">LaTeX Output: <span id="latex"></span></div>
+
+    <script src="/home/frank/Documents/Code/resources/jquery-3.6.0.min.js"></script>
+    <script src="/home/frank/Documents/Code/resources/mathquill.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded and parsed');
+            var MQ = MathQuill.getInterface(2);
+            var mathField = MQ.MathField(document.getElementById('mathquill-input'), {
+                spaceBehavesLikeTab: true,
+                handlers: {
+                    edit: function() {
+                        console.log('Editing math field');
+                        var latex = mathField.latex();
+                        document.getElementById('latex').textContent = latex;
+                    }
+                }
+            });
+
+            // Set initial content for the MathQuill field
+            mathField.latex('y = mx + b');
+            console.log('MathQuill initialized');
+        });
+    </script>
+</body>
+</html>
