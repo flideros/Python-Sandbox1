@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.web_view)
 
         # Load the HTML template using QUrl
-        html_file_path = QDir.current().absoluteFilePath("/home/frank/Documents/Code/mathquill.html")  # Adjust the path
+        html_file_path = QDir.current().absoluteFilePath("/home/frank/Documents/Code/Sandbox1/mathquill.html")  # Adjust the path
         print(f"Loading HTML file from: {html_file_path}")
         self.web_view.load(QUrl.fromLocalFile(html_file_path))
 
