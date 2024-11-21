@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuill in PyQt6</title>
+    <link rel="stylesheet" href="resources/mathquill.min.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;  /* Prevent scrollbars */
+        }
+        #mathquill-input {
+            width: 100%;
+            border: 3px solid #ccc;  /* Make default border thicker */
+            min-height: 50px; /* Ensure initial and minimum height */
+        }
+        #mathquill-input:focus {
+            border-color: #ffa500;  /* Orange border when focused */
+            border-width: 4px;  /* Make border thicker when focused */
+        }
+        #latex-output {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="mathquill-input" class="mathquill-editable"></div>
+    <div id="latex-output">LaTeX Output: <span id="latex"></span></div>
+
+    <script src="resources/jquery-3.6.0.min.js"></script>
+    <script src="resources/mathquill.min.js"></script>
+    <script src="resources/qwebchannel.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var MQ = MathQuill.getInterface(2);
+            var mathField = MQ.MathField(document.getElementById('mathquill-input'), {
+                spaceBehavesLikeTab: true,
+                handlers: {
+                    edit: function() {
+                        var latex = mathField.latex();
+                        document.getElementById('latex').textContent = latex;
+                        adjustHeight();
+                        if (window.bridge) {
+                            window.bridge.latexUpdated(latex);
+                        }
+                    }
+                }
+            });
+
+            // Setup QWebChannel communication
+            new QWebChannel(qt.webChannelTransport, function(channel) {
+                window.bridge = channel.objects.bridge;
+            });
+
+            // Function to update MathQuill content from PyQt6
+            window.updateMathQuill = function(latex) {
+                mathField.latex(latex);
+                adjustHeight();
+            };
+
+            // Adjust the height of MathQuill box based on content
+            function adjustHeight() {
+                var element = document.getElementById('mathquill-input');
+                var height = element.scrollHeight;
+                var baseHeight = 50;
+                var newHeight = Math.max(Math.ceil(height / 25) * 25, baseHeight);  // Ensure minimum height of 50px
+                element.style.height = newHeight + 'px';
+
+                if (window.bridge) {
+                    window.bridge.adjustHeight(newHeight);
+                }
+            }
+
+            // Initial adjustment
+            adjustHeight();
+        });
+    </script>
+</body>
+</html>
