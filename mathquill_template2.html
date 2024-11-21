@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuill in PyQt6</title>
+    <link rel="stylesheet" href="resources/mathquill.min.css" />
+    <style>
+        body, html {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;  /* Prevent scrollbars */
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;  /* Space between input and result */
+            align-items: center;
+            padding: 0 10px;
+        }
+        #mathquill-input {
+            flex-grow: 1;
+            height: 50px; /* Fixed height */
+            border: 1px solid #ccc;  /* Divider */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; 
+            padding: 10px;
+            overflow-y: auto; 
+        }
+        #mathquill-input:focus {
+            border-color: #ffa500;  
+            border-width: 2px;  
+        }
+        #result {
+            padding: 10px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end; 
+            background: #fff; 
+            white-space: nowrap; 
+        }
+        #result-value { 
+            font-size: 16px;
+            color: green;
+            padding: 5px;
+        }
+        #latex-output {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="mathquill-input" class="mathquill-editable"></div>
+        <div id="result">result: <span id="result-value"></span></div>
+    </div>
+    <div id="latex-output">LaTeX Output: <span id="latex"></span></div>
+
+    <script src="resources/jquery-3.6.0.min.js"></script>
+    <script src="resources/mathquill.min.js"></script>
+    <script src="resources/qwebchannel.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var MQ = MathQuill.getInterface(2);
+            var mathField = MQ.MathField(document.getElementById('mathquill-input'), {
+                spaceBehavesLikeTab: true,
+                handlers: {
+                    edit: function() {
+                        var latex = mathField.latex();
+                        document.getElementById('latex').textContent = latex;
+                        if (window.bridge) {
+                            window.bridge.latexUpdated(latex);
+                        }
+                    }
+                }
+            });
+
+            // Setup QWebChannel communication
+            new QWebChannel(qt.webChannelTransport, function(channel) {
+                window.bridge = channel.objects.bridge;
+            });
+
+            // Function to update MathQuill content from PyQt6
+            window.updateMathQuill = function(latex) {
+                mathField.latex(latex);
+            };
+        });
+    </script>
+</body>
+</html>

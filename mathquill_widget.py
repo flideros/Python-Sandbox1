@@ -13,9 +13,9 @@ class Bridge(QObject):
     def latexUpdated(self, latex):
         self.parent().update_latex_output(latex)
 
-    @pyqtSlot(int)
-    def adjustHeight(self, height):
-        self.parent().adjust_web_view_height(height)
+    @pyqtSlot(str)
+    def updateResult(self, result):
+        self.parent().update_result_content(result)
 
 class CustomWebEnginePage(QWebEnginePage):
     def __init__(self, parent=None):
@@ -50,6 +50,7 @@ class MathQuillWidget(QWidget):
         self.frame_layout = QVBoxLayout(self.frame)
         self.frame_layout.setContentsMargins(0, 0, 0, 0)  # Set frame layout margins to 0
         self.frame_layout.setSpacing(5)  # Adjust spacing within frame
+        self.frame.setVisible(False)  # Hide frame by default
 
         self.latex_label = QLabel("LaTeX Output: ")
         self.latex_label.setFixedHeight(20)  # Fixing the height for a single line of text
@@ -66,7 +67,7 @@ class MathQuillWidget(QWidget):
         spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         layout.addItem(spacer)
 
-        html_file_path = QDir.current().absoluteFilePath("mathquill_template.html")
+        html_file_path = QDir.current().absoluteFilePath("mathquill_template2.html")
         self.web_view.load(QUrl.fromLocalFile(html_file_path))
 
         self.channel = QWebChannel()
@@ -93,7 +94,9 @@ class MathQuillWidget(QWidget):
     def get_parsed_latex(self):
         return self.parsed_label.text()
 
-    def toggle_frame(self, visible):
+    def toggle_frame(self, visible=None):
+        if visible is None:
+            visible = not self.frame.isVisible()
         self.frame.setVisible(visible)
         self.latex_label.setVisible(visible)
         self.parsed_label.setVisible(visible)
@@ -101,9 +104,12 @@ class MathQuillWidget(QWidget):
     def adjust_web_view_height(self, height):
         self.web_view.setFixedHeight(max(height, 50))  # Ensure the height doesn't go below 50 pixels
 
+    @pyqtSlot(str)
+    def update_result_content(self, result):
+        script = f"document.getElementById('result-value').textContent = '{result}';"
+        self.web_view.page().runJavaScript(script)
+
 '''
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     math_quill_widget = MathQuillWidget()
@@ -129,6 +135,10 @@ class MainWindow(QMainWindow):
         self.latex_input.setPlaceholderText("Enter LaTeX here...")
         self.layout.addWidget(self.latex_input)
 
+        self.result_input = QLineEdit()
+        self.result_input.setPlaceholderText("Enter result here...")
+        self.layout.addWidget(self.result_input)
+
         self.scroll_area = QScrollArea()
         self.scroll_area_widget = QWidget()
         self.scroll_area_layout = QVBoxLayout(self.scroll_area_widget)
@@ -139,11 +149,13 @@ class MainWindow(QMainWindow):
         self.scroll_area.setWidget(self.scroll_area_widget)
         self.layout.addWidget(self.scroll_area)
 
-        
-
         update_widget_button = QPushButton("Update Last MathQuill Widget")
         update_widget_button.clicked.connect(self.update_last_widget)
         self.layout.addWidget(update_widget_button)
+
+        update_result_button = QPushButton("Update Result of Last MathQuill Widget")
+        update_result_button.clicked.connect(self.update_result)
+        self.layout.addWidget(update_result_button)
 
         toggle_frame_button = QPushButton("Toggle Frame Visibility")
         toggle_frame_button.clicked.connect(self.toggle_last_widget_frame)
@@ -158,7 +170,7 @@ class MainWindow(QMainWindow):
         self.stretch_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.stretch_label.setMinimumHeight(400)  # Ensure the label is tall enough to push down the widget
         self.scroll_area_layout.addWidget(self.stretch_label)
-        
+
         self.add_mathquill_widget()
 
     def add_mathquill_widget(self):
@@ -171,6 +183,12 @@ class MainWindow(QMainWindow):
             widget = self.scroll_area_layout.itemAt(self.scroll_area_layout.count() - 1).widget()
             latex = self.latex_input.text()
             widget.set_latex(latex)
+
+    def update_result(self):
+        if self.scroll_area_layout.count() > 1:
+            widget = self.scroll_area_layout.itemAt(self.scroll_area_layout.count() - 1).widget()
+            result = self.result_input.text()
+            widget.update_result_content(result)
 
     def toggle_last_widget_frame(self):
         if self.scroll_area_layout.count() > 1:

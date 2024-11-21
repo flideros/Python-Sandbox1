@@ -6,19 +6,27 @@
     <title>MathQuill in PyQt6</title>
     <link rel="stylesheet" href="resources/mathquill.min.css" />
     <style>
-        body {
+        body, html {
+            height: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;  /* Prevent scrollbars */
+            display: flex;
+            justify-content: left;
+            align-items: center;
         }
         #mathquill-input {
             width: 100%;
-            border: 3px solid #ccc;  /* Make default border thicker */
+            border: 0px solid #ccc;  /* Make default border thicker */
             min-height: 50px; /* Ensure initial and minimum height */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align content to the left */
+            padding: 10px;
         }
         #mathquill-input:focus {
             border-color: #ffa500;  /* Orange border when focused */
-            border-width: 4px;  /* Make border thicker when focused */
+            border-width: 2px;  /* Make border thicker when focused */
         }
         #latex-output {
             display: none;
@@ -41,7 +49,6 @@
                     edit: function() {
                         var latex = mathField.latex();
                         document.getElementById('latex').textContent = latex;
-                        adjustHeight();
                         if (window.bridge) {
                             window.bridge.latexUpdated(latex);
                         }
@@ -57,24 +64,7 @@
             // Function to update MathQuill content from PyQt6
             window.updateMathQuill = function(latex) {
                 mathField.latex(latex);
-                adjustHeight();
             };
-
-            // Adjust the height of MathQuill box based on content
-            function adjustHeight() {
-                var element = document.getElementById('mathquill-input');
-                var height = element.scrollHeight;
-                var baseHeight = 50;
-                var newHeight = Math.max(Math.ceil(height / 25) * 25, baseHeight);  // Ensure minimum height of 50px
-                element.style.height = newHeight + 'px';
-
-                if (window.bridge) {
-                    window.bridge.adjustHeight(newHeight);
-                }
-            }
-
-            // Initial adjustment
-            adjustHeight();
         });
     </script>
 </body>
