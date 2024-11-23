@@ -21,16 +21,16 @@
             width: 100%;
             justify-content: space-between;  /* Space between input and result */
             align-items: center;
-            padding: 0 10px;
+            padding: 0 0px;
         }
         #mathquill-input {
             flex-grow: 1;
             height: 50px; /* Fixed height */
-            border: 1px solid #ccc;  /* Divider */
+            border: 2px solid #ccc;  /* Divider */
             display: flex;
             align-items: center;
-            justify-content: flex-start; 
-            padding: 10px;
+            justify-content: flex-end; 
+            padding: 5px;
             overflow-y: auto; 
         }
         #mathquill-input:focus {
@@ -38,7 +38,7 @@
             border-width: 2px;  
         }
         #result {
-            padding: 10px;
+            padding: 5px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -54,9 +54,28 @@
         #latex-output {
             display: none;
         }
+        .result-box { 
+            display: inline-block; 
+            padding: 2px 2px; 
+            background-color: #d9f2e6; 
+            border: 2px 
+            solid #5cb85c; 
+            border-radius: 2px; 
+        }
     </style>
+    <script src="qwebchannel.js"></script> 
+    <script type="text/javascript"> 
+        function initializeBridge() { 
+            new QWebChannel(qt.webChannelTransport, function(channel) { 
+                window.bridge = channel.objects.bridge; 
+                document.body.onclick = function() { 
+                    window.bridge.clickedSignal(); 
+                }; 
+            }); 
+        } 
+    </script>
 </head>
-<body>
+<body onload="initializeBridge()">
     <div class="container">
         <div id="mathquill-input" class="mathquill-editable"></div>
         <div id="result">result: <span id="result-value"></span></div>
@@ -90,6 +109,12 @@
             // Function to update MathQuill content from PyQt6
             window.updateMathQuill = function(latex) {
                 mathField.latex(latex);
+            };
+            
+            // Function to insert a result box into MathQuill 
+            window.insertResultBox = function(result) { 
+                var resultLatex = `\\class{result-box}{\\text{${result}}}`; 
+                mathField.write(resultLatex); 
             };
         });
     </script>

@@ -3,9 +3,16 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QFrame, 
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import QUrl, QDir, pyqtSlot, QObject, Qt
+from PyQt6.QtCore import QUrl, QDir, pyqtSlot, pyqtSignal, QObject, Qt, QEvent
 
+'''
+Bridge Class: This class allows the Python side to receive updates from the
+JavaScript side and vice versa. For example, it enables updating the LaTeX output
+in the main application when changes occur in the MathQuill input field.
+'''
 class Bridge(QObject):
+    clicked = pyqtSignal() # Signal to emit when the web view is clicked
+    
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -16,7 +23,15 @@ class Bridge(QObject):
     @pyqtSlot(str)
     def updateResult(self, result):
         self.parent().update_result_content(result)
-
+        
+    @pyqtSlot()
+    def clickedSignal(self):
+        self.clicked.emit()
+'''
+CustomWebEnginePage Class: This custom class primarily helps to manage communication
+and handle JavaScript console messages. It ensures that any messages or errors from the
+JavaScript side can be debugged and traced in the Python console.
+'''
 class CustomWebEnginePage(QWebEnginePage):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -27,16 +42,20 @@ class CustomWebEnginePage(QWebEnginePage):
 
 class MathQuillWidget(QWidget):
     latexChanged = pyqtSlot(str)
-
-    def __init__(self, parent=None):
+    clicked = pyqtSignal(int) # Signal to be emitted when the widget is clicked
+    
+    def __init__(self, widget_id, parent=None):
         super().__init__(parent)
+        self.widget_id = widget_id
         self.parent_window = parent  # Reference to the main window
-
+        self.id_label = QLabel(f"MathQuill Widget {widget_id}")
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)  # Set margins to 0
         layout.setSpacing(5)  # Adjust spacing as needed, e.g., 5 pixels
 
         self.web_view = QWebEngineView(self)
+        
         self.web_page = CustomWebEnginePage(self)
         self.web_view.setPage(self.web_page)
         self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -44,6 +63,9 @@ class MathQuillWidget(QWidget):
         self.web_view.setMinimumHeight(50)  # Set minimum height to 50 pixels
 
         layout.addWidget(self.web_view, 0, Qt.AlignmentFlag.AlignBottom)
+        
+        # Install an event filter on the web view to capture mouse events
+        self.web_view.installEventFilter(self)
 
         self.frame = QFrame(self)
         self.frame.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
@@ -61,8 +83,9 @@ class MathQuillWidget(QWidget):
         self.parsed_label.setFixedHeight(20)  # Fixing the height for a single line of text
         self.parsed_label.setVisible(False)  # Hide label by default
         self.frame_layout.addWidget(self.parsed_label)
-
-        layout.addWidget(self.frame)
+        self.frame_layout.addWidget(self.id_label)
+        
+        layout.addWidget(self.frame)       
 
         spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         layout.addItem(spacer)
@@ -73,7 +96,12 @@ class MathQuillWidget(QWidget):
         self.channel = QWebChannel()
         self.channel.registerObject('bridge', self.web_page.bridge)
         self.web_page.setWebChannel(self.channel)
-
+        
+        # Connect the clicked signal from the bridge to the widget's clicked signal
+        self.web_page.bridge.clicked.connect(self.handle_click)
+        
+    def handle_click(self): self.clicked.emit(self.widget_id)
+    
     def update_latex_output(self, latex):
         self.latex_label.setText(f"LaTeX Output: {latex}")
         self.parsed_label.setText(f"Parsed LaTeX: {self.parse_latex(latex)}")
@@ -109,27 +137,38 @@ class MathQuillWidget(QWidget):
         script = f"document.getElementById('result-value').textContent = '{result}';"
         self.web_view.page().runJavaScript(script)
 
-'''
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    math_quill_widget = MathQuillWidget()
-    math_quill_widget.show()
-    sys.exit(app.exec())
-'''
-
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QScrollArea, QLabel, QSizePolicy, QSpacerItem
 from PyQt6.QtCore import Qt, QTimer
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("MathQuill in PyQt6")
-        self.setGeometry(100, 100, 800, 600)
+class CustomScrollArea(QScrollArea):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        
+    def wheelEvent(self, event):
+        visible_height = self.viewport().height()
+        widget_height = 50
+        num_visible_widgets = visible_height // widget_height
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        self.layout = QVBoxLayout(central_widget)
+        if self.widget().layout().count() > num_visible_widgets + 2: 
+            super().wheelEvent(event)
+        else:
+            event.ignore()
+
+class MathQuillStackWidget(QWidget):
+    latexUpdated = pyqtSignal(str)
+    resultUpdated = pyqtSignal(str)
+    widgetClicked = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("MathQuillStack in PyQt6")
+        self.setGeometry(100, 100, 800, 600)
+        
+        self.control_visibility = False  # Control visibility variable
+
+        self.layout = QVBoxLayout(self)
 
         self.latex_input = QLineEdit()
         self.latex_input.setPlaceholderText("Enter LaTeX here...")
@@ -139,31 +178,85 @@ class MainWindow(QMainWindow):
         self.result_input.setPlaceholderText("Enter result here...")
         self.layout.addWidget(self.result_input)
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = CustomScrollArea()        
+        self.scroll_area.setObjectName('scroll_area')
         self.scroll_area_widget = QWidget()
         self.scroll_area_layout = QVBoxLayout(self.scroll_area_widget)
         self.scroll_area_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_area_widget.setLayout(self.scroll_area_layout)
-
+        
+        self.scroll_area.setStyleSheet("""
+            QScrollBar:vertical {
+                border: none;
+                background: #f1f1f1;
+                width: 8px; /* Reduced width */
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: rgba(173, 216, 230, 0.5);  /* Light blue with 50% opacity */
+                min-height: 20px;
+                border-radius: 4px; /* Slightly smaller radius */
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: rgba(135, 206, 235, 0.5);  /* Slightly darker light blue with 50% opacity on hover */
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
+            }
+            QScrollBar:horizontal {
+                border: none;
+                background: #f1f1f1;
+                height: 8px; /* Reduced height */
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:horizontal {
+                background-color: rgba(173, 216, 230, 0.5);  /* Light blue with 50% opacity */
+                min-width: 20px;
+                border-radius: 4px; /* Slightly smaller radius */
+            }
+            QScrollBar::handle:horizontal:hover {
+                background-color: rgba(135, 206, 235, 0.5);  /* Slightly darker light blue with 50% opacity on hover */
+            }
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                border: none;
+                background: none;
+            }
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+                background: none;
+            }
+        """)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_area_widget)
         self.layout.addWidget(self.scroll_area)
+        
+        self.widgets_dict = {} # Dictionary to keep track of widgets
 
-        update_widget_button = QPushButton("Update Last MathQuill Widget")
-        update_widget_button.clicked.connect(self.update_last_widget)
-        self.layout.addWidget(update_widget_button)
+        self.update_widget_button = QPushButton("Update Last MathQuill Widget")
+        self.update_widget_button.clicked.connect(self.update_last_widget)
+        self.layout.addWidget(self.update_widget_button)
 
-        update_result_button = QPushButton("Update Result of Last MathQuill Widget")
-        update_result_button.clicked.connect(self.update_result)
-        self.layout.addWidget(update_result_button)
+        self.update_result_button = QPushButton("Update Result of Last MathQuill Widget")
+        self.update_result_button.clicked.connect(self.update_result)
+        self.layout.addWidget(self.update_result_button)
 
-        toggle_frame_button = QPushButton("Toggle Frame Visibility")
-        toggle_frame_button.clicked.connect(self.toggle_last_widget_frame)
-        self.layout.addWidget(toggle_frame_button)
+        self.toggle_frame_button = QPushButton("Toggle Frame Visibility")
+        self.toggle_frame_button.clicked.connect(self.toggle_last_widget_frame)
+        self.layout.addWidget(self.toggle_frame_button)
 
-        add_widget_button = QPushButton("Add MathQuill Widget")
-        add_widget_button.clicked.connect(self.add_mathquill_widget)
-        self.layout.addWidget(add_widget_button)
+        self.add_widget_button = QPushButton("Add MathQuill Widget")
+        self.add_widget_button.clicked.connect(self.add_mathquill_widget)
+        self.layout.addWidget(self.add_widget_button)
+
+        # Set visibility based on control_visibility
+        self.set_controls_visibility(self.control_visibility)
+        
+        # Get screen height and set minimum height for the layout
+        screen_height = QApplication.primaryScreen().size().height()
+        self.scroll_area_widget.setMinimumHeight(screen_height)
 
         # Add a taller, stretchable label to push the first widget to the bottom
         self.stretch_label = QLabel("")
@@ -171,13 +264,31 @@ class MainWindow(QMainWindow):
         self.stretch_label.setMinimumHeight(400)  # Ensure the label is tall enough to push down the widget
         self.scroll_area_layout.addWidget(self.stretch_label)
 
+        # Add a stretchable space to push the widgets to the bottom
+        self.scroll_area_layout.addStretch(1)
+
         self.add_mathquill_widget()
 
+    def set_controls_visibility(self, visible):
+        """Set the visibility of inputs and buttons."""
+        self.latex_input.setVisible(visible)
+        self.result_input.setVisible(visible)
+        self.update_widget_button.setVisible(visible)
+        self.update_result_button.setVisible(visible)
+        self.toggle_frame_button.setVisible(visible)
+        self.add_widget_button.setVisible(visible)
+
     def add_mathquill_widget(self):
-        widget = MathQuillWidget(self)
+        widget_id = self.scroll_area_layout.count()
+        widget = MathQuillWidget(widget_id)
+        widget.clicked.connect(self.handle_widget_click)
         self.scroll_area_layout.insertWidget(self.scroll_area_layout.count(), widget)  # Insert above the stretch label
+        self.widgets_dict[widget_id] = widget.widget_id # Add widget to dictionary
         QTimer.singleShot(100, self.scroll_to_bottom)  # Ensure the scrollbar updates correctly
 
+    def handle_widget_click(self, widget_id):
+        self.widgetClicked.emit(widget_id)
+    
     def update_last_widget(self):
         if self.scroll_area_layout.count() > 1:
             widget = self.scroll_area_layout.itemAt(self.scroll_area_layout.count() - 1).widget()
@@ -198,11 +309,46 @@ class MainWindow(QMainWindow):
     def update_main_text_input(self, latex):
         self.latex_input.setText(latex)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        QTimer.singleShot(100, self.scroll_to_bottom) # Ensure the scrollbar updates correctly
+    
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
+      
+class MainAppWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Main Application Window")
+        self.setGeometry(100, 100, 800, 600)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+              
+        self.mathquill_stack_widget = MathQuillStackWidget(self)
+        self.mathquill_stack_widget.set_controls_visibility(True)
+        layout.addWidget(self.mathquill_stack_widget)
+        
+        self.clicked_label = QLabel("Clicked Widget ID: None")
+        layout.addWidget(self.clicked_label)
+
+        # Optionally connect signals and slots if needed
+        self.mathquill_stack_widget.latexUpdated.connect(self.handle_latex_update)
+        self.mathquill_stack_widget.resultUpdated.connect(self.handle_result_update)
+        self.mathquill_stack_widget.widgetClicked.connect(self.update_label)
+
+    def update_label(self, widget_id):
+        self.clicked_label.setText(f"Clicked Widget ID: {widget_id}")
+    
+    def handle_latex_update(self, latex):
+        print("LaTeX Updated:", latex)
+
+    def handle_result_update(self, result):
+        print("Result Updated:", result)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainAppWindow()
     window.show()
     sys.exit(app.exec())
