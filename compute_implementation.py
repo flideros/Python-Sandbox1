@@ -40,7 +40,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
     
     def handle_number_input_state(state_data: NumberInputStateData, input) -> CalculatorState:
         if input == CalculatorInput.ZERO:
-            print("Zero Input - Transition to NumberInputState")
+            print("Zero Input - Stay in NumberInputState")
             digits = services.get_digit_display()
             return NumberInputStateData(current_value = digits,
                                         expression_tree = state_data.expression_tree,
@@ -51,19 +51,51 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Transition to NumberInputState")
+                print("Digit Input - Stay in NumberInputState")
                 digits = services.get_digit_display()
                 print(f"Digit Input {digits}")
                 return NumberInputStateData(current_value = digits,
                                             expression_tree = Compound([]),
                                             memory = state_data.expression_tree)
+        elif input == CalculatorInput.RETURN:
+            print("Return Input - Transition to ResultState") # TODO: Need to check if there is a result then return result state.
+            digits = services.get_digit_display()
+            return ResultStateData(result = digits,
+                                    memory = state_data.memory)
     
         return state_data  # Return the current state if no condition matches
     
     def handle_operator_input_state(state_data: OperatorInputStateData, input) -> CalculatorState: pass
     def handle_parenthesis_open_state(state_data: ParenthesisOpenStateData, input) -> CalculatorState: pass
     def handle_function_input_state(state_data: FunctionInputStateData, input) -> CalculatorState: pass
-    def handle_result_state(state_data: ResultStateData, input) -> CalculatorState: pass
+    
+    def handle_result_state(state_data: ResultStateData, input) -> CalculatorState: 
+        if input == CalculatorInput.ZERO:
+            print("Zero Input - Transition to NumberInputState")
+            digits = '0'
+            return NumberInputStateData(current_value = digits,
+                                        expression_tree = Compound([]),
+                                        memory = state_data.memory)
+        
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+        
+            if input_type == 'DIGIT' and input_value in range(1, 10):
+                print("Digit Input - Transition to NumberInputState")
+                digits = input_value
+                print(f"Digit Input {digits}")
+                return NumberInputStateData(current_value = digits,
+                                            expression_tree = Compound([]),
+                                            memory = state_data.memory)
+            
+        elif input == CalculatorInput.RETURN:
+            print("Return Input - Transition to ResultState") # TODO: Need to check if there is a result then return result state.
+            digits = services.get_digit_display()
+            return StartStateData(memory = digits)
+    
+        return state_data  # Return the current state if no condition matches
+    
     def handle_error_state(state_data: ErrorStateData, input, memory) -> CalculatorState: pass
     
     def compute(input, state) -> Optional[CalculatorState]: 

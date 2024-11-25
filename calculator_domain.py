@@ -90,7 +90,7 @@ class MathFunction(Enum):
     Enumeration for mathematical functions.
     """
     SQRT = 1
-    SQUARE = 2
+    POWER = 2
     # 
 
 # Type alias for a tuple representing a pending operation and its associated number

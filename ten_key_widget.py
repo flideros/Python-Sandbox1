@@ -22,7 +22,13 @@ class TenKey(QWidget):
     buttonClicked = pyqtSignal(str)
     inputClicked = pyqtSignal(object)
     
-    def __init__(self, config='default'):
+    def set_button_color(self, color):
+        if color is None:
+            return '#e0f2e0'
+        else:
+            return color
+    
+    def __init__(self, config='default',alt_button_color=None):
         super().__init__()        
         # Set the Ten Key configuration
         self.config = TenKeyConfig(config)
@@ -37,7 +43,8 @@ class TenKey(QWidget):
         self.get_display_from_state = services["get_display_from_state"]
         self.get_pending_op_from_state = services["get_pending_op_from_state"]
         self.get_memo_from_state = services["get_memo_from_state"]
-        
+        self.button_color = self.set_button_color(alt_button_color)
+            
         # Initial state
         self.state = CalculatorServices.initial_state
         QIcon.setThemeName("Papirus")
@@ -56,7 +63,7 @@ class TenKey(QWidget):
         BORDER_RADIUS = "5px"
         BORDER_COLOR = "#656565"
         HOVER_COLOR = "#c8c8c8"
-        BUTTON_COLOR = "#ebebeb"
+        BUTTON_COLOR = self.button_color
 
         # Style Sheets
         # Common Button Style
@@ -105,7 +112,7 @@ class TenKey(QWidget):
         # Call to setup buttons
         self.setup_buttons(button_style, button_style_recall)
         
-    # ------Create Functions---------    
+    # ------Create Functions---------        
     def setup_buttons(self, button_style, button_style_recall):
         # Buttons
         def back_button(r,c):
@@ -210,6 +217,15 @@ class TenKey(QWidget):
             
             print(f"Emitted signal: {f'{input_action}'}")    
             
+        self.update_display()
+     
+    # Function to reset ten-key widget.
+    def reset_input(self):        
+        input_mapping = CalculatorServices.ten_key_input_mapping   
+        input_action, param = input_mapping.get('CE', (None, None))
+        
+        self.state = self.calculate(input_action, self.state)            
+        print(f"Emitted signal: {f'{input_action}'}")            
         self.update_display()
     
     # Function to display current state

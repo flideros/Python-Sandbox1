@@ -3,7 +3,7 @@
 # ================================================
 from typing import Optional, Tuple, Union, Dict, Callable
 from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number, CalculatorMathOp,
-                               ErrorStateData, StartStateData,  NumberInputStateData,
+                               ErrorStateData, StartStateData,  NumberInputStateData, MathFunction,
                                OperatorInputStateData, ResultStateData, ParenthesisOpenStateData, FunctionInputStateData)
 import math
 
@@ -11,6 +11,30 @@ class ComputeServices:
     def __init__(self):
         super().__init__()
         self.digit_display = " "   
+    
+    def handle_return(self,state) -> bool:
+        def inner(state) -> bool:
+            if isinstance(state, StartStateData):
+                return False
+            
+            elif isinstance(state, NumberInputStateData):
+                return False
+            
+            elif isinstance(state, OperatorInputStateData):
+                return False
+            
+            elif isinstance(state, ResultStateData):
+                return True
+            
+            elif isinstance(state, ParenthesisOpenStateData):
+                return False
+            
+            elif isinstance(state, FunctionInputStateData):
+                return False
+                
+            elif isinstance(state, ErrorStateData):
+                return False
+        return inner(state)
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -59,6 +83,9 @@ class ComputeServices:
             '-': (CalculatorInput.MATHOP, CalculatorMathOp.SUBTRACT),
             '*': (CalculatorInput.MATHOP, CalculatorMathOp.MULTIPLY),
             '/': (CalculatorInput.MATHOP, CalculatorMathOp.DIVIDE),
-            '=': (CalculatorInput.EQUALS, None),
-            '√': (CalculatorInput.MATHOP, CalculatorMathOp.ROOT)
+            'Return': (CalculatorInput.RETURN, None),
+            'Sqrt': (CalculatorInput.FUNCTION, MathFunction.SQRT),
+            'Power': (CalculatorInput.FUNCTION, MathFunction.POWER),
+            '(': (CalculatorInput.RETURN, None),
+            ')': (CalculatorInput.RETURN, None)
         }
