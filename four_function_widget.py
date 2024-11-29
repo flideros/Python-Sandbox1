@@ -246,7 +246,7 @@ class FourFunctionCalculator(QWidget):
         if handle_return_input == True and input_text in ['-','+','/','*']:
             self.resetSignal.emit() # Emit the reset signal
             output_text, result_text = self.services.get_display_from_state("Error:")(self.state)
-            self.mathquill_stack_widget.latex_input.setText(output_text.replace('*','\\\\times').replace('/','\\\\div')) #(self.query_digit_display())
+            self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget()
             print("State after operation input:", self.state)
         
@@ -270,7 +270,7 @@ class FourFunctionCalculator(QWidget):
         
         # Get latex from servies and state.
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
-        self.mathquill_stack_widget.latex_input.setText(output_text.replace('*','\\\\times').replace('/','\\\\div')) #(self.query_digit_display())
+        self.mathquill_stack_widget.latex_input.setText(output_text)
         self.mathquill_stack_widget.update_last_widget()
         if result is not None:
             print(f"{result}")

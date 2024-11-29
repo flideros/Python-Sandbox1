@@ -101,6 +101,9 @@ class ComputeServices:
         """
         Returns the display strings based on the current state of the computation.
         """
+        def format_(exp:str) -> str:
+            return exp.replace('*','\\\\times').replace('/','\\\\div')
+        
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):
                 return (self.digit_display, " ")
@@ -110,19 +113,22 @@ class ComputeServices:
                 result = "todo"
                 try:
                     expr = sp.sympify(expression)
-                    result = str(expr)
+                    if '.' in (str(expr)):
+                        result = str(expr.evalf(10)).rstrip('0').rstrip('.')
+                    else:
+                        result = str(expr)
                     print(result)
                 except Exception as e:
                     result = (str(e))
-                return (expression,result)
+                return (format_(expression),result)
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 expression = evaluate_expression(calculator_state.expression_tree)
                 result = " "
-                return (expression,result)
+                return (format_(expression),result)
             
             elif isinstance(calculator_state, ResultStateData):
-                return (calculator_state.result, None)
+                return (format_(calculator_state.result), None)
             
             elif isinstance(calculator_state, ParenthesisOpenStateData):
                 return (calculator_state.expression_tree, None)
