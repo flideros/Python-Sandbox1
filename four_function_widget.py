@@ -113,7 +113,7 @@ class FourFunctionCalculator(QWidget):
         
         # Math Quill widget for math output and input
         self.mathquill_stack_widget = MathQuillStackWidget(self)
-        #self.mathquill_stack_widget.set_controls_visibility(True)
+        # self.mathquill_stack_widget.set_controls_visibility(True)
         self.vbox.addWidget(self.mathquill_stack_widget)
         
         self.mathquill_stack_widget.widgetClicked.connect(self.update_label)
@@ -138,7 +138,6 @@ class FourFunctionCalculator(QWidget):
         self.ten_key_grid_layout = QGridLayout()
         self.ten_key_grid_layout.addWidget(self.ten_key)
         
-                
         # 4x2 button grid layout
         self.function_button_grid_layout = QGridLayout()
         self.setup_function_buttons(button_style)
@@ -217,7 +216,7 @@ class FourFunctionCalculator(QWidget):
             self.handleInputClicked(text)
         return handler
 
-    def emitResetSignal(self):
+    def emitResetSignal(self): # 10-Key subscribes to this signal to clear the digit accumulator
         self.resetSignal.emit() 
 
     @pyqtSlot(str)
@@ -239,11 +238,24 @@ class FourFunctionCalculator(QWidget):
         
         handle_return_input = self.services.handle_return(self.state)
         
-        if handle_return_input == True and input_text == 'Return':            
+        if handle_return_input == True and input_text == 'Return':
             self.resetSignal.emit() # Emit the reset signal
             self.mathquill_stack_widget.add_mathquill_widget()                        
             print("State after return:", self.state)
             
+        if handle_return_input == True and input_text in ['-','+','/','*']:
+            self.resetSignal.emit() # Emit the reset signal
+            output_text, result_text = self.services.get_display_from_state("Error:")(self.state)
+            self.mathquill_stack_widget.latex_input.setText(output_text.replace('*','\\\\times').replace('/','\\\\div')) #(self.query_digit_display())
+            self.mathquill_stack_widget.update_last_widget()
+            print("State after operation input:", self.state)
+        
+        output_text, result = self.services.get_display_from_state("Error:")(self.state)
+        if result is not None:
+            print(f"{result}")
+            self.mathquill_stack_widget.result_input.setText(result)
+            self.mathquill_stack_widget.update_result()
+        
         print(f"handle_return: {handle_return_input}")
         
     
@@ -256,9 +268,14 @@ class FourFunctionCalculator(QWidget):
         
         self.state = self.compute(self.current_input, self.state)
         
-        # TODO: Get latex from servies and state.
-        self.mathquill_stack_widget.latex_input.setText(self.query_digit_display())
+        # Get latex from servies and state.
+        output_text, result = self.services.get_display_from_state("Error:")(self.state)
+        self.mathquill_stack_widget.latex_input.setText(output_text.replace('*','\\\\times').replace('/','\\\\div')) #(self.query_digit_display())
         self.mathquill_stack_widget.update_last_widget()
+        if result is not None:
+            print(f"{result}")
+            self.mathquill_stack_widget.result_input.setText(result)
+            self.mathquill_stack_widget.update_result()        
                 
         print(f"Ten Key Window state: {self.state}")
         

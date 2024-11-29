@@ -1,16 +1,17 @@
 # ================================================
 # Compute Services
 # ================================================
-from typing import Optional, Tuple, Union, Dict, Callable
+from typing import Optional, Tuple, Union, Dict, Callable, List
 from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number, CalculatorMathOp,
-                               ErrorStateData, StartStateData,  NumberInputStateData, MathFunction,
+                               ErrorStateData, StartStateData,  NumberInputStateData, MathFunction, evaluate_expression,
                                OperatorInputStateData, ResultStateData, ParenthesisOpenStateData, FunctionInputStateData)
 import math
+import sympy as sp
 
 class ComputeServices:    
     def __init__(self):
         super().__init__()
-        self.digit_display = " "   
+        self.digit_display = " "
     
     def handle_return(self,state) -> bool:
         def inner(state) -> bool:
@@ -18,10 +19,11 @@ class ComputeServices:
                 return False
             
             elif isinstance(state, NumberInputStateData):
+                
                 return False
             
-            elif isinstance(state, OperatorInputStateData):
-                return False
+            elif isinstance(state, OperatorInputStateData):                
+                return True
             
             elif isinstance(state, ResultStateData):
                 return True
@@ -35,6 +37,57 @@ class ComputeServices:
             elif isinstance(state, ErrorStateData):
                 return False
         return inner(state)
+    
+    def parse_expression(self, expression: str) -> Expression:
+        tokens = self.tokenize(expression)
+        return self.parse_tokens(tokens)
+
+    def tokenize(self, expression: str) -> List[str]:
+        import re
+        token_pattern = re.compile(r'(\d+|sqrt|[+*/()-])')
+        tokens = token_pattern.findall(expression)
+        return tokens
+
+    def parse_tokens(self, tokens: List[str]) -> Expression:
+        def parse_inner(tokens, index):
+            exprs = []
+            while index < len(tokens):
+                token = tokens[index]
+                if token.isdigit():
+                    exprs.append(Number(token))
+                    index += 1
+                elif token == 'sqrt':
+                    sub_expr, index = parse_function(tokens, index)
+                    exprs.append(sub_expr)
+                elif token in '+-*/':
+                    exprs.append(Operator(token))
+                    index += 1
+                elif token == '(':
+                    sub_expr, index = parse_inner(tokens, index + 1)
+                    exprs.append(Parenthesis(sub_expr))
+                elif token == ')':
+                    return Compound(exprs), index + 1
+                else:
+                    raise ValueError(f"Unknown token: {token}")
+            return Compound(exprs), index
+
+        def parse_function(tokens, index):
+            func_name = tokens[index]
+            index += 1
+            if tokens[index] != '(':
+                raise ValueError("Expected '(' after function name")
+            sub_expr, index = parse_inner(tokens, index + 1)
+            if func_name == 'sqrt':
+                func = self.sqrt_func
+            else:
+                raise ValueError(f"Unknown function: {func_name}")
+            return Function(expression=sub_expr, function=func), index
+
+        expr_tree, _ = parse_inner(tokens, 0)
+        return expr_tree
+    
+    def sqrt_func(self, x: str) -> str:
+        return f"sqrt({x})"
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -50,25 +103,35 @@ class ComputeServices:
         """
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):
-                return " "
+                return (self.digit_display, " ")
             
-            elif isinstance(calculator_state, NumberInputStateData):
-                return calculator_state.expression_tree
+            elif isinstance(calculator_state, NumberInputStateData):                
+                expression = evaluate_expression(calculator_state.expression_tree)
+                result = "todo"
+                try:
+                    expr = sp.sympify(expression)
+                    result = str(expr)
+                    print(result)
+                except Exception as e:
+                    result = (str(e))
+                return (expression,result)
             
             elif isinstance(calculator_state, OperatorInputStateData):
-                return calculator_state.expression_tree
+                expression = evaluate_expression(calculator_state.expression_tree)
+                result = " "
+                return (expression,result)
             
             elif isinstance(calculator_state, ResultStateData):
-                return calculator_state.result
+                return (calculator_state.result, None)
             
             elif isinstance(calculator_state, ParenthesisOpenStateData):
-                return calculator_state.expression_tree
+                return (calculator_state.expression_tree, None)
             
             elif isinstance(calculator_state, FunctionInputStateData):
-                return calculator_state.expression_tree
+                return (calculator_state.expression_tree, None)
                 
             elif isinstance(calculator_state, ErrorStateData):
-                return error_msg + calculator_state.math_error.value
+                return (error_msg + calculator_state.math_error.value, None)
         return inner
     
     """

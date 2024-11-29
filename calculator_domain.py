@@ -120,10 +120,6 @@ Operator:
 --Contains a single field operator which is a string representing the operator.
 '''
 @dataclass
-class Variable(Expression):
-    name: str
-
-@dataclass
 class Operator(Expression):
     operator: str
 '''
@@ -157,6 +153,10 @@ Compound:
 @dataclass
 class Compound(Expression):
     expressions: List[Expression] = field(default_factory=list)
+    
+@dataclass
+class Variable(Expression):
+    name: str
     
 @dataclass
 class Exponentiation(Expression):
@@ -220,8 +220,6 @@ def evaluate_expression(expr: Expression) -> str:
         return f"{evaluate_expression(expr.base)}_{evaluate_expression(expr.subscript)}"
     elif isinstance(expr, Superscript):
         return f"{evaluate_expression(expr.base)}^{evaluate_expression(expr.superscript)}"
-    elif isinstance(expr, SquareRoot):
-        return f"√{evaluate_expression(expr.radicand)}"
     elif isinstance(expr, NthRoot):
         return f"√[{evaluate_expression(expr.degree)}]{evaluate_expression(expr.radicand)}"
     elif isinstance(expr, Matrix):
@@ -230,10 +228,9 @@ def evaluate_expression(expr: Expression) -> str:
         return f"{evaluate_expression(expr.lhs)} = {evaluate_expression(expr.rhs)}"
     elif isinstance(expr, Conditional):
         return f"if {evaluate_expression(expr.condition)} then {evaluate_expression(expr.true_expr)} else {evaluate_expression(expr.false_expr)}"
-    elif isinstance(expr, List):
-        return f"[{', '.join(evaluate_expression(e) for e in expr.elements)}]"
     else:
-        raise ValueError("Unknown Expression Type")
+        pass
+        #raise ValueError("Unknown Expression Type")
 
 class MathOperationError(Enum):
     """
@@ -323,7 +320,7 @@ class ZeroStateData:
     def __str__(self):
         return f"ZeroStateData(pending_op={self.pending_op}, memory='{self.memory}')"
 
-# Expression States
+####### Expression States#######
 @dataclass
 class StartStateData:
     memory: str = " "    
@@ -333,8 +330,8 @@ class StartStateData:
 class NumberInputStateData:
     current_value: str
     expression_tree: Compound()
-    memory: str = ""       
-    stack: list = field(default_factory=list)
+    memory: str = " "       
+    stack: List[str] = field(default_factory=list)
 
 @dataclass
 class OperatorInputStateData:
@@ -343,26 +340,27 @@ class OperatorInputStateData:
     current_value: str
     expression_tree: Compound()
     memory: str = " "    
-    stack: list = field(default_factory=list)
+    stack: List[str] = field(default_factory=list)
     
 @dataclass
 class ResultStateData:
     result: str
     memory: str = " "    
+    stack: List[str] = field(default_factory=list)
     
 @dataclass
 class ParenthesisOpenStateData:
     inner_expression: str
     expression_tree: Compound()
     memory: str = " "    
-    stack: list = field(default_factory=list)
+    stack: List[str] = field(default_factory=list)
     
 @dataclass
 class FunctionInputStateData:
     current_value: str
     expression_tree: Compound()
     memory: str = " "    
-    stack: list = field(default_factory=list)
+    stack: List[str] = field(default_factory=list)
     
     
     
