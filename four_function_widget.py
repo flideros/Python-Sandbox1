@@ -243,21 +243,19 @@ class FourFunctionCalculator(QWidget):
             self.mathquill_stack_widget.add_mathquill_widget()                        
             print("State after return:", self.state)
             
+        output_text, result = self.services.get_display_from_state("Error:")(self.state)
         if handle_return_input == True and input_text in ['-','+','/','*']:
-            self.resetSignal.emit() # Emit the reset signal
-            output_text, result_text = self.services.get_display_from_state("Error:")(self.state)
+            # Emit the reset signal
+            self.resetSignal.emit()             
+            # Update mathquil expression
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget()
-            print("State after operation input:", self.state)
+            print("State after operation input:", self.state)        
         
-        output_text, result = self.services.get_display_from_state("Error:")(self.state)
+        # Update mathquil result for non-digit input
         if result is not None:
-            print(f"{result}")
             self.mathquill_stack_widget.result_input.setText(result)
             self.mathquill_stack_widget.update_result()
-        
-        print(f"handle_return: {handle_return_input}")
-        
     
     @pyqtSlot(str)
     def handleTenKeyButtonClicked(self, text: str):        
@@ -272,13 +270,12 @@ class FourFunctionCalculator(QWidget):
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
         self.mathquill_stack_widget.latex_input.setText(output_text)
         self.mathquill_stack_widget.update_last_widget()
+        
+        # Update mathquil result for digit input
         if result is not None:
-            print(f"{result}")
             self.mathquill_stack_widget.result_input.setText(result)
             self.mathquill_stack_widget.update_result()        
-                
-        print(f"Ten Key Window state: {self.state}")
-        
+                        
     def query_digit_display(self) -> str:
         return self.get_digit_display()
     

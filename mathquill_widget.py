@@ -134,8 +134,12 @@ class MathQuillWidget(QWidget):
 
     @pyqtSlot(str)
     def update_result_content(self, result):
-        script = f"document.getElementById('result-value').textContent = '{result}';"
+        script = f"""
+        document.getElementById('result-value').innerHTML = '$$' + `{result}` + '$$';
+        MathJax.typesetPromise([document.getElementById('result-value')]);
+        """
         self.web_view.page().runJavaScript(script)
+
 
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QScrollArea, QLabel, QSizePolicy, QSpacerItem

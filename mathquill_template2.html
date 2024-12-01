@@ -38,7 +38,7 @@
             border-width: 2px;  
         }
         #result {
-            padding: 5px;
+            padding: 3px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -63,7 +63,19 @@
             border-radius: 2px; 
         }
     </style>
+    <!-- MathJax Configuration --> 
+    <script type="text/javascript"> 
+        window.MathJax = { 
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\ \[', '\\] ']] }, 
+                svg: { fontCache: 'global' } }; 
+    </script>
     <script src="qwebchannel.js"></script> 
+    <script src="resources/jquery-3.6.0.min.js"></script>
+    <script src="resources/mathquill.min.js"></script>
+    <script src="resources/qwebchannel.js"></script>
+    <script src="resources/MathJax/es5/tex-mml-chtml.js"></script>
     <script type="text/javascript"> 
         function initializeBridge() { 
             new QWebChannel(qt.webChannelTransport, function(channel) { 
@@ -81,10 +93,7 @@
         <div id="result">result: <span id="result-value"></span></div>
     </div>
     <div id="latex-output">LaTeX Output: <span id="latex"></span></div>
-
-    <script src="resources/jquery-3.6.0.min.js"></script>
-    <script src="resources/mathquill.min.js"></script>
-    <script src="resources/qwebchannel.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var MQ = MathQuill.getInterface(2);
@@ -115,6 +124,12 @@
             window.insertResultBox = function(result) { 
                 var resultLatex = `\\class{result-box}{\\text{${result}}}`; 
                 mathField.write(resultLatex); 
+            };
+            // Function to update the result with LaTeX and render it 
+            window.updateResultWithLatex = function(latex) { 
+                var resultElement = document.getElementById('result-value'); 
+                resultElement.textContent = `$$${latex}$$`; 
+                MathJax.typesetPromise([resultElement]); // Render LaTeX
             };
         });
     </script>

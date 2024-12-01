@@ -112,11 +112,23 @@ class ComputeServices:
                 expression = evaluate_expression(calculator_state.expression_tree)
                 result = "todo"
                 try:
-                    expr = sp.sympify(expression)
-                    if '.' in (str(expr)):
-                        result = str(expr.evalf(10)).rstrip('0').rstrip('.')
-                    else:
-                        result = str(expr)
+                    exp = sp.sympify(expression)
+                    expr = sp.Rational(exp)
+                    integer = expr // 1 # Integer division
+                    fraction = expr - integer
+                    numerator = fraction.numerator
+                    denominator = fraction.denominator
+                    if '.' in (str(exp)):
+                        result = str(exp.evalf(10)).rstrip('0').rstrip('.')
+                    else:                        
+                        if integer == 0 and fraction == 0:
+                            result = "0"
+                        elif integer == 0 and fraction != 0: 
+                            result = f"\\\\frac{{{numerator}}}{{{denominator}}}"
+                        elif integer != 0 and fraction == 0:
+                            result = f"{integer}"
+                        elif integer != 0 and fraction != 0:
+                            result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                            
                     print(result)
                 except Exception as e:
                     result = (str(e))
@@ -155,6 +167,6 @@ class ComputeServices:
             'Return': (CalculatorInput.RETURN, None),
             'Sqrt': (CalculatorInput.FUNCTION, MathFunction.SQRT),
             'Power': (CalculatorInput.FUNCTION, MathFunction.POWER),
-            '(': (CalculatorInput.RETURN, None),
-            ')': (CalculatorInput.RETURN, None)
+            '(': (CalculatorInput.PARENOPEN, None),
+            ')': (CalculatorInput.PARENCLOSE, None)
         }

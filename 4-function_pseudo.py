@@ -108,8 +108,11 @@ class FourFunctionCalculator:
     def input_operator(self, operator: str):
         self.save_state()
         operator_expr = Operator(operator=operator)
-        if self.state not in {CalculatorState.PARENTHESIS_OPEN, CalculatorState.FUNCTION_INPUT}:
+
+        # Allow operators after parenthesis close
+        if self.state in {CalculatorState.OPERATOR_INPUT, CalculatorState.RESULT, CalculatorState.ENTERING_NUMBER, CalculatorState.PARENTHESIS_OPEN}:
             self.expression_tree.expressions.append(operator_expr)
+
         self.state_data = OperatorInputState(
             previous_value=self.state_data.current_value if isinstance(self.state_data, EnteringNumberState) else "",
             operator=operator,
@@ -117,6 +120,7 @@ class FourFunctionCalculator:
         )
         self.state = CalculatorState.OPERATOR_INPUT
         self.debug_state("Operator Input")
+
 
     def input_equals(self):
         self.save_state()
@@ -136,15 +140,13 @@ class FourFunctionCalculator:
     def input_parenthesis_open(self):
         self.save_state()
         new_compound = Compound([])
-        if self.expression_tree.expressions and isinstance(self.expression_tree.expressions[-1], (Parenthesis, Function)):
-            self.expression_tree.expressions[-1].expression.expressions.append(new_compound)
-        else:
-            self.expression_tree.expressions.append(Parenthesis(new_compound))
+        self.expression_tree.expressions.append(Parenthesis(new_compound))
         self.stack.append((self.state, self.state_data, self.expression_tree))
         self.expression_tree = new_compound
         self.state_data = ParenthesisOpenState(inner_expression="")
         self.state = CalculatorState.PARENTHESIS_OPEN
         self.debug_state("Parenthesis Open")
+
 
     def input_parenthesis_close(self):
         self.save_state()
@@ -240,25 +242,26 @@ class FourFunctionCalculator:
 # Running the examples with the updated class and steps.
 calc = FourFunctionCalculator()
 
-# Serial parentheses example: 3 + (2 * (4 + 1)) + (5 - (3 + 2))
+# Serial parentheses example: 3 + ((4 + 1) * 2) + (5 - (3 + 2))
 calc.input_digit("3")
 calc.input_operator("+")
-calc.input_parenthesis_open()
-calc.input_digit("2")
-calc.input_operator("*")
-calc.input_parenthesis_open()
+calc.input_parenthesis_open()  # Expected behavior: added Parenthesis(new_compound)
+calc.input_parenthesis_open()  # Expected behavior: added new_compound
+
 calc.input_digit("4")
 calc.input_operator("+")
 calc.input_digit("1")
 calc.input_parenthesis_close()
+calc.input_operator("*")
+calc.input_digit("2")
 calc.input_parenthesis_close()
 
 calc.input_operator("+")
 
-calc.input_parenthesis_open()
+calc.input_parenthesis_open()  # Expected behavior: added Parenthesis(new_compound)
 calc.input_digit("5")
 calc.input_operator("-")
-calc.input_parenthesis_open()
+calc.input_parenthesis_open()  # Expected behavior: added new_compound
 calc.input_digit("3")
 calc.input_operator("+")
 calc.input_digit("2")
@@ -289,3 +292,37 @@ parsed_tree = calc.parse_expression(out2)
 out3 = evaluate_expression(parsed_tree)
 print(out3) # Should print "9+sqrt(4)"
 print(f"{parsed_tree}")
+
+
+
+# Clear initial state for a clean start
+calc.input_clear()
+
+# Input digit '3' and operator '+'
+calc.input_digit("3")
+calc.input_operator("+")
+
+# Open first parenthesis
+calc.input_parenthesis_open()  # Adds Parenthesis(new_compound)
+calc.input_digit("4")
+calc.input_operator("+")
+calc.input_digit("1")
+calc.input_parenthesis_close()  # Closes the first parenthesis
+
+# Open a new parenthesis immediately after closing the previous one
+calc.input_operator("*")
+calc.input_parenthesis_open()  # Adds Parenthesis(new_compound)
+calc.input_digit("5")
+calc.input_operator("-")
+calc.input_digit("2")
+calc.input_parenthesis_close()  # Closes the second parenthesis
+
+calc.input_equals()
+
+# Check resulting expression and evaluation
+expression_string = evaluate_expression(calc.expression_tree)
+print(expression_string)
+parsed_expression = calc.parse_expression(expression_string)
+out1 = evaluate_expression(parsed_expression)
+print(out1)
+print(f"{parsed_expression}")
