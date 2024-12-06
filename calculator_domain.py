@@ -346,7 +346,7 @@ class OperatorInputStateData:
 class ResultStateData:
     result: str
     memory: str = " "    
-    stack: List[str] = field(default_factory=list)
+    history: List[str] = field(default_factory=list) # ToDo
     
 @dataclass
 class ParenthesisOpenStateData:

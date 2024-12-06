@@ -244,14 +244,15 @@ class FourFunctionCalculator(QWidget):
             print("State after return:", self.state)
             
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
-        if handle_return_input == True and input_text in ['-','+','/','*']:
+        # Update mathquill output for non-digit input
+        if input_text in ['-','+','/','*','(',')']:
             # Emit the reset signal
             self.resetSignal.emit()             
             # Update mathquil expression
+            print(f"expression {output_text}")
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget()
-            print("State after operation input:", self.state)        
-        
+            print("State after operation input:", self.state)
         # Update mathquil result for non-digit input
         if result is not None:
             self.mathquill_stack_widget.result_input.setText(result)

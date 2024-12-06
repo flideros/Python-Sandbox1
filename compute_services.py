@@ -5,6 +5,7 @@ from typing import Optional, Tuple, Union, Dict, Callable, List
 from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number, CalculatorMathOp,
                                ErrorStateData, StartStateData,  NumberInputStateData, MathFunction, evaluate_expression,
                                OperatorInputStateData, ResultStateData, ParenthesisOpenStateData, FunctionInputStateData)
+import re
 import math
 import sympy as sp
 
@@ -14,27 +15,10 @@ class ComputeServices:
         self.digit_display = " "
     
     def handle_return(self,state) -> bool:
-        def inner(state) -> bool:
-            if isinstance(state, StartStateData):
-                return False
-            
-            elif isinstance(state, NumberInputStateData):
-                
-                return False
-            
-            elif isinstance(state, OperatorInputStateData):                
-                return True
-            
-            elif isinstance(state, ResultStateData):
-                return True
-            
-            elif isinstance(state, ParenthesisOpenStateData):
-                return False
-            
-            elif isinstance(state, FunctionInputStateData):
-                return False
-                
-            elif isinstance(state, ErrorStateData):
+        def inner(state) -> bool:            
+            if isinstance(state, ResultStateData):
+                return True            
+            else:
                 return False
         return inner(state)
     
@@ -97,6 +81,21 @@ class ComputeServices:
         out = self.digit_display
         return out
     
+    def preprocess_expression(self,expression:str) -> str:
+        # Insert multiplication between number and parenthesis to allow implicit multiplication
+        processed_expression = re.sub(r'(\d)(\()', r'\1*\2', expression)
+        processed_expression = re.sub(r'(\))(\d)', r'\1*\2', processed_expression)
+        return processed_expression
+    
+    def get_decimal_value(self, expression):
+        exp = self.preprocess_expression(expression)
+        expr = sp.sympify(exp)
+        return str(expr.evalf())
+    
+    def simplify_expression(self, expression):
+        exp = self.preprocess_expression(expression)
+        return sp.sympify(exp)
+    
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
@@ -109,10 +108,14 @@ class ComputeServices:
                 return (self.digit_display, " ")
             
             elif isinstance(calculator_state, NumberInputStateData):                
-                expression = evaluate_expression(calculator_state.expression_tree)
-                result = "todo"
-                try:
-                    exp = sp.sympify(expression)
+                if calculator_state.stack is not None and len(calculator_state.stack) > 0:
+                    _state, exp = calculator_state.stack[0]
+                    expression = evaluate_expression(exp)    
+                else:
+                    expression = evaluate_expression(calculator_state.expression_tree)                
+                ex = self.preprocess_expression(expression)
+                try:                    
+                    exp = sp.sympify(ex)
                     expr = sp.Rational(exp)
                     integer = expr // 1 # Integer division
                     fraction = expr - integer
@@ -135,15 +138,25 @@ class ComputeServices:
                 return (format_(expression),result)
             
             elif isinstance(calculator_state, OperatorInputStateData):
-                expression = evaluate_expression(calculator_state.expression_tree)
+                if calculator_state.stack is not None and len(calculator_state.stack) > 0:
+                    _state, exp = calculator_state.stack[0]
+                    expression = evaluate_expression(exp)    
+                else:
+                    expression = evaluate_expression(calculator_state.expression_tree) 
                 result = " "
                 return (format_(expression),result)
             
             elif isinstance(calculator_state, ResultStateData):
-                return (format_(calculator_state.result), None)
+                return (" ",None)
             
             elif isinstance(calculator_state, ParenthesisOpenStateData):
-                return (calculator_state.expression_tree, None)
+                if calculator_state.stack is not None and len(calculator_state.stack) > 0:
+                    _state, exp = calculator_state.stack[0]
+                    expression = evaluate_expression(exp)    
+                else:
+                    expression = evaluate_expression(calculator_state.expression_tree)
+                result = " "                
+                return (format_(expression), result)
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 return (calculator_state.expression_tree, None)
