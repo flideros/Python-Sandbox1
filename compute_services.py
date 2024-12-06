@@ -110,9 +110,11 @@ class ComputeServices:
             elif isinstance(calculator_state, NumberInputStateData):                
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)    
+                    expression = evaluate_expression(exp)
+                    expression_out = expression[:-len(calculator_state.stack)]
                 else:
-                    expression = evaluate_expression(calculator_state.expression_tree)                
+                    expression = evaluate_expression(calculator_state.expression_tree)
+                    expression_out = expression
                 ex = self.preprocess_expression(expression)
                 try:                    
                     exp = sp.sympify(ex)
@@ -134,17 +136,18 @@ class ComputeServices:
                             result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                            
                     print(result)
                 except Exception as e:
-                    result = (str(e))
-                return (format_(expression),result)
+                    result = (str(e))                
+                return (format_(expression_out),result)
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)    
+                    expression = evaluate_expression(exp)
+                    expression_out = expression[:-len(calculator_state.stack)]
                 else:
-                    expression = evaluate_expression(calculator_state.expression_tree) 
-                result = " "
-                return (format_(expression),result)
+                    expression_out = evaluate_expression(calculator_state.expression_tree) 
+                result = " "                
+                return (format_(expression_out),result)
             
             elif isinstance(calculator_state, ResultStateData):
                 return (" ",None)
@@ -152,11 +155,12 @@ class ComputeServices:
             elif isinstance(calculator_state, ParenthesisOpenStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)    
+                    expression = evaluate_expression(exp)
+                    expression_out = expression[:-len(calculator_state.stack)]
                 else:
-                    expression = evaluate_expression(calculator_state.expression_tree)
+                    expression_out = evaluate_expression(calculator_state.expression_tree)
                 result = " "                
-                return (format_(expression), result)
+                return (format_(expression_out), result)
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 return (calculator_state.expression_tree, None)

@@ -154,7 +154,13 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         elif input == CalculatorInput.RETURN:
             print("Return Input - Transition to ResultState") 
             # Check if there is a result then return result state.
-            expression = str(services.simplify_expression(evaluate_expression(state_data.expression_tree)))
+            if state_data.stack is not None and len(state_data.stack) > 0:
+                _state, exp = state_data.stack[0]
+                expr = evaluate_expression(exp)
+                expression = str(services.simplify_expression(expr))    
+            else:
+                expr = evaluate_expression(state_data.expression_tree)
+                expression = str(services.simplify_expression(expr))
             result = services.get_decimal_value(expression).rstrip('0').rstrip('.')
             if '.' in expression:
                 memo = result
@@ -173,7 +179,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 state_data.stack = [(state_data,state_data.expression_tree)]
             print(f'new stack {state_data.stack}')
             new_inner_expression = evaluate_expression(state_data.expression_tree)
-            return ParenthesisOpenStateData(inner_expression = new_inner_expression[:-1],                                       
+            return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
                                             stack = state_data.stack)
@@ -241,7 +247,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 state_data.stack = [(state_data,state_data.expression_tree)]
             print(f'new stack {state_data.stack}')
             new_inner_expression = evaluate_expression(state_data.expression_tree)
-            return ParenthesisOpenStateData(inner_expression = new_inner_expression[:-1],                                       
+            return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                    
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
                                             stack = state_data.stack)
