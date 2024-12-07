@@ -85,6 +85,7 @@ class ComputeServices:
         # Insert multiplication between number and parenthesis to allow implicit multiplication
         processed_expression = re.sub(r'(\d)(\()', r'\1*\2', expression)
         processed_expression = re.sub(r'(\))(\d)', r'\1*\2', processed_expression)
+        processed_expression = re.sub(r'(\))(\()', r'\1*\2', processed_expression)
         return processed_expression
     
     def get_decimal_value(self, expression):

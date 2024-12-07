@@ -168,13 +168,15 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         elif input == CalculatorInput.PARENCLOSE:
             print("Parenthesis Close Input - Transition to ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
+            if len(state_data.stack) == 0:
+                return state_data
             previous_state_data, previous_expression_tree = state_data.stack.pop()                         
             state_data.expression_tree = previous_expression_tree            
             new_inner_expression = evaluate_expression(state_data.expression_tree)
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = state_data.expression_tree,
                                             memory = state_data.memory,
-                                            stack = state_data.stack)
+                                            stack = state_data.stack)        
         
         return state_data  # Return the current state if no condition matches
     
@@ -275,6 +277,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = state_data.memory,
                                                   stack = state_data.stack)
                 elif _input_value == CalculatorMathOp.ADD:                    
+                    if state_data.inner_expression == '(':
+                        return state_data
+                    if len(state_data.stack) > 0 and state_data.inner_expression[-2:] == '()':
+                        return state_data                    
                     operator_expr = Operator(operator='+')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
@@ -286,6 +292,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = state_data.memory,
                                                   stack = state_data.stack)
                 elif _input_value == CalculatorMathOp.MULTIPLY:                    
+                    if state_data.inner_expression == '(':
+                        return state_data
+                    if len(state_data.stack) > 0 and state_data.inner_expression[-2:] == '()':
+                        return state_data                    
                     operator_expr = Operator(operator='*')
                     previous = evaluate_expression(state_data.expression_tree)
                     state_data.expression_tree.expressions.append(operator_expr)                     
@@ -296,6 +306,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = state_data.memory,
                                                   stack = state_data.stack)
                 elif _input_value == CalculatorMathOp.DIVIDE:                    
+                    if state_data.inner_expression == '(':
+                        return state_data
+                    if len(state_data.stack) > 0 and state_data.inner_expression[-2:] == '()':
+                        return state_data                    
                     operator_expr = Operator(operator='/')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
