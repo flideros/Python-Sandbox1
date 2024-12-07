@@ -324,7 +324,9 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         elif input == CalculatorInput.PARENCLOSE:
             print("Parenthesis Close Input - Transition to ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
-            previous_state_data, previous_expression_tree = state_data.stack.pop()
+            if len(state_data.stack) == 0:
+                return state_data
+            previous_state_data, previous_expression_tree = state_data.stack.pop()            
             if len(state_data.inner_expression) == 1 and state_data.inner_expression[-1] != "(":                
                 state_data.expression_tree = previous_expression_tree            
                 new_inner_expression = evaluate_expression(state_data.expression_tree)                
