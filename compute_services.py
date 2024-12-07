@@ -159,8 +159,28 @@ class ComputeServices:
                     expression_out = expression[:-len(calculator_state.stack)]
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
-                result = " "                
-                return (format_(expression_out), result)
+                ex = self.preprocess_expression(expression_out)
+                try:                    
+                    exp = sp.sympify(ex)
+                    expr = sp.Rational(exp)
+                    integer = expr // 1 # Integer division
+                    fraction = expr - integer
+                    numerator = fraction.numerator
+                    denominator = fraction.denominator
+                    if '.' in (str(exp)):
+                        result = str(exp.evalf(10)).rstrip('0').rstrip('.')
+                    else:                        
+                        if integer == 0 and fraction == 0:
+                            result = "0"
+                        elif integer == 0 and fraction != 0: 
+                            result = f"\\\\frac{{{numerator}}}{{{denominator}}}"
+                        elif integer != 0 and fraction == 0:
+                            result = f"{integer}"
+                        elif integer != 0 and fraction != 0:
+                            result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                
+                except Exception as e:
+                    result = " "                
+                return (format_(expression_out),result)
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 return (calculator_state.expression_tree, None)

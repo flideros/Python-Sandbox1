@@ -67,9 +67,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             value = Value(value=digits)
             if isinstance(state_data.expression_tree.expressions[-1], Value):
                 state_data.expression_tree.expressions[-1] =  value            
-            elif isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                if isinstance(state_data.expression_tree.expressions[-1].expressions[-1], Value):
-                    state_data.expression_tree.expressions[-1].expressions[-1] = value
             return NumberInputStateData(current_value = digits,
                                         expression_tree = state_data.expression_tree,
                                         memory = state_data.memory,
@@ -84,10 +81,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 digits = services.get_digit_display()
                 value = Value(value=digits)
                 if isinstance(state_data.expression_tree.expressions[-1], Value):
-                    state_data.expression_tree.expressions[-1] = value
-                elif isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                    if isinstance(state_data.expression_tree.expressions[-1].expressions[-1], Value):
-                        state_data.expression_tree.expressions[-1].expressions[-1] = value
+                    state_data.expression_tree.expressions[-1] = value                
                 return NumberInputStateData(current_value = digits,
                                             expression_tree = state_data.expression_tree,
                                             memory = state_data.memory,
@@ -99,10 +93,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                     operator_expr = Operator(operator='-')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
-                    if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                        state_data.expression_tree.expressions[-1].expressions.append(operator_expr)
-                    else:
-                        state_data.expression_tree.expressions.append(operator_expr)                    
+                    state_data.expression_tree.expressions.append(operator_expr)                    
                     return OperatorInputStateData(previous_value = previous,
                                                   operator = '-',
                                                   current_value = ' ',
@@ -113,10 +104,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                     operator_expr = Operator(operator='+')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
-                    if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                        state_data.expression_tree.expressions[-1].expressions.append(operator_expr)
-                    else:
-                        state_data.expression_tree.expressions.append(operator_expr)                     
+                    state_data.expression_tree.expressions.append(operator_expr)                     
                     return OperatorInputStateData(previous_value = previous,
                                                   operator = '+',
                                                   current_value = ' ',
@@ -126,10 +114,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 elif _input_value == CalculatorMathOp.MULTIPLY:                    
                     operator_expr = Operator(operator='*')
                     previous = evaluate_expression(state_data.expression_tree)
-                    if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                        state_data.expression_tree.expressions[-1].expressions.append(operator_expr)
-                    else:
-                        state_data.expression_tree.expressions.append(operator_expr)                     
+                    state_data.expression_tree.expressions.append(operator_expr)                     
                     return OperatorInputStateData(previous_value = previous,
                                                   operator = '*',
                                                   current_value = ' ',
@@ -140,10 +125,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                     operator_expr = Operator(operator='/')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
-                    if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                        state_data.expression_tree.expressions[-1].expressions.append(operator_expr)
-                    else:
-                        state_data.expression_tree.expressions.append(operator_expr)                     
+                    state_data.expression_tree.expressions.append(operator_expr)                     
                     return OperatorInputStateData(previous_value = previous,
                                                   operator = '/',
                                                   current_value = ' ',
@@ -184,6 +166,16 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             memory = state_data.memory,
                                             stack = state_data.stack)
         
+        elif input == CalculatorInput.PARENCLOSE:
+            print("Parenthesis Close Input - Transition to ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
+            previous_state_data, previous_expression_tree = state_data.stack.pop()                         
+            state_data.expression_tree = previous_expression_tree            
+            new_inner_expression = evaluate_expression(state_data.expression_tree)
+            return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
+                                            expression_tree = state_data.expression_tree,
+                                            memory = state_data.memory,
+                                            stack = state_data.stack)
+        
         return state_data  # Return the current state if no condition matches
     
     def handle_operator_input_state(state_data: OperatorInputStateData, input) -> CalculatorState:
@@ -192,10 +184,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             print("Zero Input - Transition to NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)              
-            if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:                
-                state_data.expression_tree.expressions[-1].expressions.append(value)
-            else:
-                state_data.expression_tree.expressions.append(value)
+            state_data.expression_tree.expressions.append(value)
             return NumberInputStateData(current_value = digits,
                                         expression_tree = state_data.expression_tree,
                                         memory = state_data.memory,
@@ -209,10 +198,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 print("Digit Input - Transition to NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)
-                if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:                
-                    state_data.expression_tree.expressions[-1].expressions.append(value)
-                else:
-                    state_data.expression_tree.expressions.append(value)
+                state_data.expression_tree.expressions.append(value)
                 print(f"Digit Input {digits}")
                 return NumberInputStateData(current_value = value,
                                             expression_tree = state_data.expression_tree,
@@ -226,10 +212,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                     operator_expr = Operator(operator='-')
                     #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
-                    if isinstance(state_data.expression_tree.expressions[-1], Parenthesis) and len(state_data.stack) > 0:
-                        state_data.expression_tree.expressions[-1].expressions.append(operator_expr)
-                    else:
-                        state_data.expression_tree.expressions.append(operator_expr)                    
+                    state_data.expression_tree.expressions.append(operator_expr)                    
                     return OperatorInputStateData(previous_value = previous,
                                                   operator = '-',
                                                   current_value = ' ',
@@ -278,14 +261,47 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 return NumberInputStateData(current_value = digits,
                                             expression_tree = state_data.expression_tree,
                                             memory = state_data.memory,
-                                            stack = state_data.stack)            
+                                            stack = state_data.stack)
+            
             elif input_type == 'MATHOP':   
                 if _input_value == CalculatorMathOp.SUBTRACT:                    
                     operator_expr = Operator(operator='-')
+                    previous = evaluate_expression(state_data.expression_tree)
                     state_data.expression_tree.expressions.append(operator_expr)
-                    print(f"{new_tree}")
-                    return OperatorInputStateData(previous_value = ' ',
+                    return OperatorInputStateData(previous_value = previous,
                                                   operator = '-',
+                                                  current_value = ' ',
+                                                  expression_tree = state_data.expression_tree,
+                                                  memory = state_data.memory,
+                                                  stack = state_data.stack)
+                elif _input_value == CalculatorMathOp.ADD:                    
+                    operator_expr = Operator(operator='+')
+                    #if not state_data.stack:
+                    previous = evaluate_expression(state_data.expression_tree)
+                    state_data.expression_tree.expressions.append(operator_expr)                     
+                    return OperatorInputStateData(previous_value = previous,
+                                                  operator = '+',
+                                                  current_value = ' ',
+                                                  expression_tree = state_data.expression_tree,
+                                                  memory = state_data.memory,
+                                                  stack = state_data.stack)
+                elif _input_value == CalculatorMathOp.MULTIPLY:                    
+                    operator_expr = Operator(operator='*')
+                    previous = evaluate_expression(state_data.expression_tree)
+                    state_data.expression_tree.expressions.append(operator_expr)                     
+                    return OperatorInputStateData(previous_value = previous,
+                                                  operator = '*',
+                                                  current_value = ' ',
+                                                  expression_tree = state_data.expression_tree,
+                                                  memory = state_data.memory,
+                                                  stack = state_data.stack)
+                elif _input_value == CalculatorMathOp.DIVIDE:                    
+                    operator_expr = Operator(operator='/')
+                    #if not state_data.stack:
+                    previous = evaluate_expression(state_data.expression_tree)
+                    state_data.expression_tree.expressions.append(operator_expr)                     
+                    return OperatorInputStateData(previous_value = previous,
+                                                  operator = '/',
                                                   current_value = ' ',
                                                   expression_tree = state_data.expression_tree,
                                                   memory = state_data.memory,
@@ -305,6 +321,52 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
                                             stack = state_data.stack)
+        
+        elif input == CalculatorInput.PARENCLOSE:
+            print("Parenthesis Close Input - Transition to ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
+            previous_state_data, previous_expression_tree = state_data.stack.pop()
+            if len(state_data.inner_expression) == 1 and state_data.inner_expression[-1] != "(":                
+                state_data.expression_tree = previous_expression_tree            
+                new_inner_expression = evaluate_expression(state_data.expression_tree)                
+                return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
+                                                expression_tree = state_data.expression_tree,
+                                                memory = state_data.memory,
+                                                stack = state_data.stack)
+            if len(state_data.inner_expression) > 1 and state_data.inner_expression[-2:] != "()":                
+                print(f"state_data.inner_expression[-2:] is {state_data.inner_expression[-2:]}")
+                state_data.expression_tree = previous_expression_tree            
+                new_inner_expression = evaluate_expression(state_data.expression_tree)                
+                return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
+                                                expression_tree = state_data.expression_tree,
+                                                memory = state_data.memory,
+                                                stack = state_data.stack)
+            else:
+                state_data.stack.append((previous_state_data, previous_expression_tree))
+                new_inner_expression = evaluate_expression(state_data.expression_tree)
+                return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
+                                                expression_tree = state_data.expression_tree,
+                                                memory = state_data.memory,
+                                                stack = state_data.stack)
+        
+        elif input == CalculatorInput.RETURN:
+            print("Return Input - Transition to ResultState") 
+            # Check if there is a result then return result state.
+            if state_data.stack is not None and len(state_data.stack) > 0:
+                _state, exp = state_data.stack[0]
+                expr = evaluate_expression(exp)
+                expression = str(services.simplify_expression(expr))    
+            else:
+                expr = evaluate_expression(state_data.expression_tree)
+                expression = str(services.simplify_expression(expr))
+            result = services.get_decimal_value(expression).rstrip('0').rstrip('.')
+            if '.' in expression:
+                memo = result
+            else:
+                memo = expression                
+            return ResultStateData(result = result,
+                                   memory = memo)
+        
+        return state_data  # Return the current state if no condition matches
     
     def handle_function_input_state(state_data: FunctionInputStateData, input) -> CalculatorState: pass
     
