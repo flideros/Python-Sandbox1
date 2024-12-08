@@ -113,6 +113,7 @@ Value:
 @dataclass
 class Value(Expression):
     value: str
+    result: bool = field(default=False)
 '''
 Operator:
 --Represents an operator (e.g., +, -, *, /) in the expression.
@@ -200,8 +201,10 @@ class Conditional(Expression):
 
 # Catamorphism to Traverse the Expression Tree
 def evaluate_expression(expr: Expression) -> str:
-    if isinstance(expr, Value):
+    if isinstance(expr, Value) and expr.result == False:
         return expr.value
+    elif isinstance(expr, Value) and expr.result == True:
+        return f"\\\\class{{result-box}}{{{expr.value}}}"
     elif isinstance(expr, Variable):
         return expr.name
     elif isinstance(expr, Operator):

@@ -267,7 +267,7 @@ class FourFunctionCalculator(QWidget):
         
         self.state = self.compute(self.current_input, self.state)
         
-        # Get latex from servies and state.
+        # Get latex from servies and state.         
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
         self.mathquill_stack_widget.latex_input.setText(output_text)
         self.mathquill_stack_widget.update_last_widget()

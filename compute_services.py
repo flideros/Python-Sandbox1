@@ -82,10 +82,23 @@ class ComputeServices:
         return out
     
     def preprocess_expression(self,expression:str) -> str:
+        # Regular expression to extract the number within the last set of curly braces
+        pattern1 = r"\\\\class\{result-box\}\{(\d+)\}"
+        pattern2 = r"\\\\class\{result-box\}\{(\d+/\d+)\}"
+        pattern3 = r"\\\\class\{result-box\}\{(\d+\.\d+)\}"
+        #pattern4 = r"\(\\\\class\{result-box\}\{\s*\}\)"
+        # Function to replace the matched pattern with the captured number
+        def replace_with_number(match):
+            return match.group(1)
+        processed_expression = re.sub(pattern1, replace_with_number, expression)
+        processed_expression = re.sub(pattern2, replace_with_number, processed_expression)
+        processed_expression = re.sub(pattern3, replace_with_number, processed_expression)
+        #processed_expression = re.sub(pattern4, replace_with_number, processed_expression)
         # Insert multiplication between number and parenthesis to allow implicit multiplication
-        processed_expression = re.sub(r'(\d)(\()', r'\1*\2', expression)
+        processed_expression = re.sub(r'(\d)(\()', r'\1*\2', processed_expression)
         processed_expression = re.sub(r'(\))(\d)', r'\1*\2', processed_expression)
         processed_expression = re.sub(r'(\))(\()', r'\1*\2', processed_expression)
+        
         return processed_expression
     
     def get_decimal_value(self, expression):

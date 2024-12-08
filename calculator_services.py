@@ -213,7 +213,8 @@ class CalculatorServices:
             '9': (CalculatorInput.DIGIT, NonZeroDigit.NINE),
             '.': (CalculatorInput.DECIMALSEPARATOR, None),
             '←': (CalculatorInput.BACK, None),
-            'CE': (CalculatorInput.CLEARENTRY, None)
+            'CE': (CalculatorInput.CLEARENTRY, None),
+            'MR': (CalculatorInput.MEMORYRECALL, None)
         }
     """
     Returns a dictionary of charachter mappings to calculator inputs
