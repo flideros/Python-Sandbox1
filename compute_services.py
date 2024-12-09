@@ -75,29 +75,31 @@ class ComputeServices:
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
-        print(f"Service received ten key display: {display}")
                  
     def get_digit_display(self):
         out = self.digit_display
         return out
     
     def preprocess_expression(self,expression:str) -> str:
-        # Regular expression to extract the number within the last set of curly braces
-        pattern1 = r"\\\\class\{result-box\}\{(\d+)\}"
-        pattern2 = r"\\\\class\{result-box\}\{(\d+/\d+)\}"
-        pattern3 = r"\\\\class\{result-box\}\{(\d+\.\d+)\}"
-        #pattern4 = r"\(\\\\class\{result-box\}\{\s*\}\)"
         # Function to replace the matched pattern with the captured number
         def replace_with_number(match):
             return match.group(1)
+        # Regular expression to extract the number within the last set of curly braces
+        pattern1 = r"\\\\class\{result-box\}\{(-?\d+)\}" # Integer
+        pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
+        pattern3 = r"\\\\class\{result-box\}\{(-?\d+\.\d+)\}" # Decimal
+        # Insert multiplication between number and parenthesis to allow implicit multiplication
+        pattern4 = r'(\d)(\()'
+        pattern5 = r'(\))(\d)'
+        pattern6 = r'(\))(\()'
+        pattern7 = r'\1*\2' # Insert multiplication
+        # Process expression with patterns 
         processed_expression = re.sub(pattern1, replace_with_number, expression)
         processed_expression = re.sub(pattern2, replace_with_number, processed_expression)
-        processed_expression = re.sub(pattern3, replace_with_number, processed_expression)
-        #processed_expression = re.sub(pattern4, replace_with_number, processed_expression)
-        # Insert multiplication between number and parenthesis to allow implicit multiplication
-        processed_expression = re.sub(r'(\d)(\()', r'\1*\2', processed_expression)
-        processed_expression = re.sub(r'(\))(\d)', r'\1*\2', processed_expression)
-        processed_expression = re.sub(r'(\))(\()', r'\1*\2', processed_expression)
+        processed_expression = re.sub(pattern3, replace_with_number, processed_expression)        
+        processed_expression = re.sub(pattern4, pattern7, processed_expression)
+        processed_expression = re.sub(pattern5, pattern7, processed_expression)
+        processed_expression = re.sub(pattern6, pattern7, processed_expression)
         
         return processed_expression
     
@@ -148,7 +150,7 @@ class ComputeServices:
                             result = f"{integer}"
                         elif integer != 0 and fraction != 0:
                             result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                            
-                    print(result)
+                    print(f"result: {result}")
                 except Exception as e:
                     result = (str(e))                
                 return (format_(expression_out),result)
@@ -192,6 +194,7 @@ class ComputeServices:
                             result = f"{integer}"
                         elif integer != 0 and fraction != 0:
                             result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                
+                    print(f"result: {result}")
                 except Exception as e:
                     result = " "                
                 return (format_(expression_out),result)

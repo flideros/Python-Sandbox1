@@ -14,8 +14,7 @@ class CalculatorServices:
         """
         if len(accumulator.strip()) >= max_len:
             print("Max length reached; ignoring new input.")
-            return accumulator.strip()  # Ignore new input if length exceeds max
-        print(f"Appending '{append_ch}' to accumulator '{accumulator.strip()}'.")
+            return accumulator.strip()  # Ignore new input if length exceeds max        
         return accumulator.strip() + append_ch
 
     def accumulate_non_zero_digit(self, max_len: int):
@@ -25,7 +24,6 @@ class CalculatorServices:
         def inner(digit: NonZeroDigit, accumulator: DigitAccumulator) -> DigitAccumulator:
             append_ch = str(digit)
             new_accumulator = self.append_to_accumulator(max_len, accumulator.strip(), append_ch)
-            print(f"Resulting accumulator: '{new_accumulator}'")
             return new_accumulator
         return inner
 
@@ -34,7 +32,6 @@ class CalculatorServices:
         Returns a function that appends a zero to the accumulator.
         """
         def inner(accumulator: DigitAccumulator) -> DigitAccumulator:
-            print(f"Accumulating zero to: '{accumulator.strip()}'")
             return self.append_to_accumulator(max_len, accumulator.strip(), "0")
         return inner
 
@@ -46,10 +43,8 @@ class CalculatorServices:
             if '.' in accumulator:
                 return accumulator
             else:
-                append_ch = "0." if accumulator.strip() == "" else "."
-                print(f"Accumulating separator to: '{accumulator.strip()}'")    
+                append_ch = "0." if accumulator.strip() == "" else "."    
                 new_accumulator = self.append_to_accumulator(max_len, accumulator.strip(), append_ch)
-                print(f"Resulting accumulator: '{new_accumulator}'")
                 return new_accumulator
         return inner
     
@@ -66,8 +61,7 @@ class CalculatorServices:
         """
         Performs a mathematical operation based on the provided operator.
         """
-        if op == CalculatorMathOp.PERCENT:
-            print(f"convert to percent: '{f1}'")
+        if op == CalculatorMathOp.PERCENT:            
             return MathOperationResult(success=f1/100)
         elif op == CalculatorMathOp.ROOT:
             try: d = math.sqrt(f1)

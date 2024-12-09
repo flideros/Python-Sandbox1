@@ -186,8 +186,7 @@ class TenKey(QWidget):
             button.setFont(QFont('Arial', 14))
             self.grid.addWidget(button, row, col)
             button.clicked.connect(self.create_handler(text))
-            button.clicked.connect(self.handle_button_clicked)
-                        
+            button.clicked.connect(self.handle_button_clicked)                        
     
     # Function to bind handler to an action
     def create_handler(self, text):
@@ -197,7 +196,6 @@ class TenKey(QWidget):
 
     def handle_button_clicked(self):
         display = self.result.text()
-        print(f"10-Key widget queried display: {display}")
         self.buttonClicked.emit(display)         
     
     # Function to route action to a handler
@@ -208,14 +206,9 @@ class TenKey(QWidget):
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
-        print("Input action:", input_action)        
-        print("Current state:", self.state)
-        
         if input_action is not None:            
             self.state = self.calculate(input_action, self.state)            
-            self.inputClicked.emit(input_action)            
-            
-            print(f"Emitted signal: {f'{input_action}'}")    
+            self.inputClicked.emit(input_action)  
             
         self.update_display()
      
@@ -224,18 +217,17 @@ class TenKey(QWidget):
         input_mapping = CalculatorServices.ten_key_input_mapping   
         input_action, param = input_mapping.get('CE', (None, None))
         
-        self.state = self.calculate(input_action, self.state)            
-        print(f"Emitted signal: {f'{input_action}'}")            
+        self.state = self.calculate(input_action, self.state)         
         self.update_display()
     
     # Function to display current state
     def update_display(self):
-        print("=======Ten Key Input and Display=======")
-        print("Output State:", self.state)
-        print("Display Text:", self.get_display_from_state(self.state))
-        print("Pending Op Text:", self.get_pending_op_from_state(self.state))
-        print("Memo Text:", self.get_memo_from_state(self.state))
-        print("=======================================")
+        #print("=======Ten Key Input and Display=======")
+        #print("Output State:", self.state)
+        #print("Display Text:", self.get_display_from_state(self.state))
+        #print("Pending Op Text:", self.get_pending_op_from_state(self.state))
+        #print("Memo Text:", self.get_memo_from_state(self.state))
+        #print("=======================================")
         self.result.setText(self.get_display_from_state(self.state))
         
     def keyPressEvent(self, event):

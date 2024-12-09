@@ -227,21 +227,16 @@ class FourFunctionCalculator(QWidget):
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
-        print("Input action:", input_action)        
-        print("Current state:", self.state)
-        
         if input_action is not None:             
             self.state = self.compute(input_action, self.state)
         
         self.current_input = input_text
-        print(f"Input clicked: {input_text}")
         
         handle_return_input = self.services.handle_return(self.state)
         
         if handle_return_input == True and input_text == 'Return':
             self.resetSignal.emit() # Emit the reset signal
             self.mathquill_stack_widget.add_mathquill_widget()                        
-            print("State after return:", self.state)
             
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
         # Update mathquill output for non-digit input
@@ -249,18 +244,15 @@ class FourFunctionCalculator(QWidget):
             # Emit the reset signal
             self.resetSignal.emit()             
             # Update mathquil expression
-            print(f"expression {output_text}")
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget()
-            print("State after operation input:", self.state)
         # Update mathquil result for non-digit input
         if result is not None:
             self.mathquill_stack_widget.result_input.setText(result)
             self.mathquill_stack_widget.update_result()
     
     @pyqtSlot(str)
-    def handleTenKeyButtonClicked(self, text: str):        
-        print(f"Ten Key Window Button clicked: {text}")
+    def handleTenKeyButtonClicked(self, text: str):
         self.send_ten_key_display(text)        
         self.query_digit_display()
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")

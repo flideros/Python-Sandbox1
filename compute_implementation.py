@@ -30,7 +30,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Transition to NumberInputState")
+                print(f"Digit Input {input_value} - Transition to NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)                
                 return NumberInputStateData(current_value = digits,
@@ -38,10 +38,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             memory = " ")
             
             elif input_type == 'MATHOP':   
-                if _input_value == CalculatorMathOp.SUBTRACT:                    
+                print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
+                if _input_value == CalculatorMathOp.SUBTRACT: 
                     operator_expr = Operator(operator='-')
                     new_tree = Compound([operator_expr])
-                    print(f"{new_tree}")
                     return OperatorInputStateData(previous_value = ' ',
                                                   operator = '-',
                                                   current_value = ' ',
@@ -49,7 +49,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = " ")
                 
         elif input == CalculatorInput.DECIMALSEPARATOR:
-            print("Decimal Input - Transition to NumberInputState")
+            print("Decimal Seperator Input - Transition to NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)            
             return NumberInputStateData(current_value = digits,
@@ -57,7 +57,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         memory = " ")
         
         elif input == CalculatorInput.MEMORYRECALL:
-            print("Decimal Input - Transition to NumberInputState")
+            print("Memory recall - Transition to NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)            
             return NumberInputStateData(current_value = digits,
@@ -73,8 +73,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             expression_tree = new_compound,
                                             memory = " ",
                                             stack = new_stack)
-        
-        
         
         return state_data  # Return the current state if no condition matches    
     
@@ -98,7 +96,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Stay in NumberInputState")
+                print(f"Digit Input {input_value} - Stay in NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)
                 if isinstance(state_data.expression_tree.expressions[-1], Value):
@@ -112,10 +110,9 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             stack = state_data.stack)
             
             elif input_type == 'MATHOP':   
-                print("Math Operation Input - Transition to OperatorInputState")
+                print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
                 if _input_value == CalculatorMathOp.SUBTRACT:                    
                     operator_expr = Operator(operator='-')
-                    #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
                     state_data.expression_tree.expressions.append(operator_expr)                    
                     return OperatorInputStateData(previous_value = previous,
@@ -126,7 +123,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
                 elif _input_value == CalculatorMathOp.ADD:                    
                     operator_expr = Operator(operator='+')
-                    #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
                     state_data.expression_tree.expressions.append(operator_expr)                     
                     return OperatorInputStateData(previous_value = previous,
@@ -147,7 +143,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
                 elif _input_value == CalculatorMathOp.DIVIDE:                    
                     operator_expr = Operator(operator='/')
-                    #if not state_data.stack:
                     previous = evaluate_expression(state_data.expression_tree)
                     state_data.expression_tree.expressions.append(operator_expr)                     
                     return OperatorInputStateData(previous_value = previous,
@@ -182,8 +177,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             if state_data.stack is not None:
                 state_data.stack.append((state_data,state_data.expression_tree))
             else:
-                state_data.stack = [(state_data,state_data.expression_tree)]
-            print(f'new stack {state_data.stack}')
+                state_data.stack = [(state_data,state_data.expression_tree)]            
             new_inner_expression = evaluate_expression(state_data.expression_tree)
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = new_compound,
@@ -221,18 +215,17 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Transition to NumberInputState")
+                print(f"Digit Input {input_value} - Transition to NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)
                 state_data.expression_tree.expressions.append(value)
-                print(f"Digit Input {digits}")
                 return NumberInputStateData(current_value = value,
                                             expression_tree = state_data.expression_tree,
                                             stack = state_data.stack,
                                             memory = state_data.memory)
             
             elif input_type == 'MATHOP':   
-                print("Math Operation Input - Transition to OperatorInputState")
+                print(f"Math Operation Input {_input_value} - Stay in OperatorInputState")
                 if _input_value == CalculatorMathOp.SUBTRACT:                    
                     
                     operator_expr = Operator(operator='-')
@@ -264,7 +257,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                 state_data.stack.append((state_data,state_data.expression_tree))
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]
-            print(f'new stack {state_data.stack}')
             new_inner_expression = evaluate_expression(state_data.expression_tree)
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                    
                                             expression_tree = new_compound,
@@ -290,7 +282,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Stay in NumberInputState")
+                print(f"Digit Input {input_value} - Transition to NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)
                 state_data.expression_tree.expressions.append(value)
@@ -300,6 +292,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             stack = state_data.stack)
             
             elif input_type == 'MATHOP':   
+                print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
                 if _input_value == CalculatorMathOp.SUBTRACT:                    
                     operator_expr = Operator(operator='-')
                     previous = evaluate_expression(state_data.expression_tree)
@@ -356,7 +349,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
                 
         elif input == CalculatorInput.MEMORYRECALL:
-            print("Decimal Input - Transition to NumberInputState")
+            print("Memory Recall Input - Transition to NumberInputState")
             memory = state_data.memory
             value = Value(value=memory,result=True)            
             state_data.expression_tree.expressions.append(value)
@@ -366,14 +359,13 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         stack = state_data.stack)
         
         elif input == CalculatorInput.PARENOPEN:
-            print("Parenthesis Open Input - Transition to ParenthesisOpenState")
+            print("Parenthesis Open Input - Stay in ParenthesisOpenState")
             new_compound = Compound([])            
             state_data.expression_tree.expressions.append(Parenthesis(new_compound))             
             if state_data.stack is not None:
                 state_data.stack.append((state_data,state_data.expression_tree))
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]
-            print(f'new stack {state_data.stack}')
             new_inner_expression = evaluate_expression(state_data.expression_tree)
             return ParenthesisOpenStateData(inner_expression = new_inner_expression[:-1],                                       
                                             expression_tree = new_compound,
@@ -381,7 +373,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             stack = state_data.stack)
         
         elif input == CalculatorInput.PARENCLOSE:
-            print("Parenthesis Close Input - Transition to ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
+            print("Parenthesis Close Input - Stay in ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
             if len(state_data.stack) == 0:
                 return state_data
             previous_state_data, previous_expression_tree = state_data.stack.pop()            
@@ -393,7 +385,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                 memory = state_data.memory,
                                                 stack = state_data.stack)
             if len(state_data.inner_expression) > 1 and state_data.inner_expression[-2:] != "()":                
-                print(f"state_data.inner_expression[-2:] is {state_data.inner_expression[-2:]}")
                 state_data.expression_tree = previous_expression_tree            
                 new_inner_expression = evaluate_expression(state_data.expression_tree)                
                 return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
@@ -445,7 +436,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             input_value = _input_value.value
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
-                print("Digit Input - Transition to NumberInputState")
+                print(f"Digit Input {input_value} - Transition to NumberInputState")
                 digits = services.get_digit_display()
                 value = Value(value=digits)                
                 return NumberInputStateData(current_value = digits,
@@ -453,10 +444,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             memory = state_data.memory)
             
             elif input_type == 'MATHOP':   
+                print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
                 if _input_value == CalculatorMathOp.SUBTRACT:                    
                     operator_expr = Operator(operator='-')
                     new_tree = Compound([operator_expr])
-                    print(f"{new_tree}")
                     return OperatorInputStateData(previous_value = ' ',
                                                   operator = '-',
                                                   current_value = ' ',
