@@ -160,10 +160,10 @@ class FourFunctionCalculator(QWidget):
     # ------Create Functions---------    
     def setup_function_buttons(self, button_style):        
         function_buttons = [
-            ('/', 0, 0), ('(', 0, 1), 
-            ('*', 1, 0), (')', 1, 1),
-            ('+', 2, 0), ('FUNC', 2, 1), 
-            ('-', 3, 0), ('Return', 3, 1)
+            ('Divide by', 0, 0), ('(', 0, 1), 
+            ('Times', 1, 0), (')', 1, 1),
+            ('Plus', 2, 0), ('FUNC', 2, 1), 
+            ('Minus', 3, 0), ('Return', 3, 1)
         ]        
         for (text, row, col) in function_buttons:            
             button = QPushButton(text)
@@ -238,18 +238,19 @@ class FourFunctionCalculator(QWidget):
             self.resetSignal.emit() # Emit the reset signal
             self.mathquill_stack_widget.add_mathquill_widget()                        
             
-        output_text, result = self.services.get_display_from_state("Error:")(self.state)
+        #output_text, result = self.services.get_display_from_state("Error:")(self.state)
         # Update mathquill output for non-digit input
-        if input_text in ['-','+','/','*','(',')']:
+        if input_text in ['Minus','Plus','Divide by','Times','(',')']:
             # Emit the reset signal
+            output_text, result = self.services.get_display_from_state("Error:")(self.state)
             self.resetSignal.emit()             
             # Update mathquil expression
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget()
-        # Update mathquil result for non-digit input
-        if result is not None:
-            self.mathquill_stack_widget.result_input.setText(result)
-            self.mathquill_stack_widget.update_result()
+            # Update mathquil result for non-digit input
+            if result is not None:
+                self.mathquill_stack_widget.result_input.setText(result)
+                self.mathquill_stack_widget.update_result()
     
     @pyqtSlot(str)
     def handleTenKeyButtonClicked(self, text: str):

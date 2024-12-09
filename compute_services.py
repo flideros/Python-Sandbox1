@@ -150,7 +150,7 @@ class ComputeServices:
                             result = f"{integer}"
                         elif integer != 0 and fraction != 0:
                             result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                            
-                    print(f"result: {result}")
+                    print(f"----result: {result}")
                 except Exception as e:
                     result = (str(e))                
                 return (format_(expression_out),result)
@@ -194,7 +194,7 @@ class ComputeServices:
                             result = f"{integer}"
                         elif integer != 0 and fraction != 0:
                             result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                
-                    print(f"result: {result}")
+                    print(f"----result: {result}")
                 except Exception as e:
                     result = " "                
                 return (format_(expression_out),result)
@@ -218,6 +218,10 @@ class ComputeServices:
             '-': (CalculatorInput.MATHOP, CalculatorMathOp.SUBTRACT),
             '*': (CalculatorInput.MATHOP, CalculatorMathOp.MULTIPLY),
             '/': (CalculatorInput.MATHOP, CalculatorMathOp.DIVIDE),
+            'Plus': (CalculatorInput.MATHOP, CalculatorMathOp.ADD),
+            'Minus': (CalculatorInput.MATHOP, CalculatorMathOp.SUBTRACT),
+            'Times': (CalculatorInput.MATHOP, CalculatorMathOp.MULTIPLY),
+            'Divide by': (CalculatorInput.MATHOP, CalculatorMathOp.DIVIDE),
             'Return': (CalculatorInput.RETURN, None),
             'Sqrt': (CalculatorInput.FUNCTION, MathFunction.SQRT),
             'Power': (CalculatorInput.FUNCTION, MathFunction.POWER),
