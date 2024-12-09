@@ -156,9 +156,15 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             print("Decimal Seperator Input - Stay in NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)            
+            if isinstance(state_data.expression_tree.expressions[-1], Value):
+                if state_data.expression_tree.expressions[-1].result:
+                    return state_data
+                else:  
+                    state_data.expression_tree.expressions[-1] =  value
             return NumberInputStateData(current_value = digits,
-                                        expression_tree = Compound([value]),
-                                        memory = state_data.memory)
+                                        expression_tree = state_data.expression_tree,
+                                        memory = state_data.memory,
+                                        stack = state_data.stack)
         
         elif input == CalculatorInput.RETURN:
             print("Return Input - Transition to ResultState") 
@@ -252,9 +258,11 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             print("Decimal Seperator Input - Transition to NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)            
+            state_data.expression_tree.expressions.append(value)
             return NumberInputStateData(current_value = digits,
-                                        expression_tree = Compound([value]),
-                                        memory = state_data.memory)
+                                        expression_tree = state_data.expression_tree,
+                                        memory = state_data.memory,
+                                        stack = state_data.stack)
         
         elif input == CalculatorInput.MEMORYRECALL:
             print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
@@ -369,9 +377,11 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             print("Decimal Seperator Input - Transition to NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)            
+            state_data.expression_tree.expressions.append(value)
             return NumberInputStateData(current_value = digits,
-                                        expression_tree = Compound([value]),
-                                        memory = state_data.memory)
+                                        expression_tree = state_data.expression_tree,
+                                        memory = state_data.memory,
+                                        stack = state_data.stack)
         
         elif input == CalculatorInput.MEMORYRECALL:
             print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
