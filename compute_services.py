@@ -112,6 +112,33 @@ class ComputeServices:
         exp = self.preprocess_expression(expression)
         return sp.sympify(exp)
     
+    def get_mixed_number(self, expression: str):
+        try:                    
+            exp = sp.sympify(expression)
+            fraction = sp.Rational(exp)
+            abs_numerator = abs(fraction.numerator)
+            numerator = fraction.numerator
+            denominator = fraction.denominator
+            integer = abs_numerator // denominator # Integer division
+            remainder = abs_numerator % denominator
+            if numerator < 0:
+                integer = -integer                    
+            if '.' in (str(exp)):
+                result = str(exp.evalf(10)).rstrip('0').rstrip('.')
+            else:                        
+                if integer == 0 and remainder == 0:
+                    result = "0"
+                elif integer == 0 and remainder != 0: 
+                    result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
+                elif integer != 0 and remainder == 0:
+                    result = f"{integer}"
+                elif integer != 0 and remainder != 0:
+                    result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                            
+            print(f"----result: {result}")
+        except Exception as e:
+            result = (str(e))
+        return result
+    
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
@@ -132,30 +159,7 @@ class ComputeServices:
                     expression = evaluate_expression(calculator_state.expression_tree)
                     expression_out = expression
                 ex = self.preprocess_expression(expression)
-                try:                    
-                    exp = sp.sympify(ex)
-                    fraction = sp.Rational(exp)
-                    abs_numerator = abs(fraction.numerator)
-                    numerator = fraction.numerator
-                    denominator = fraction.denominator
-                    integer = abs_numerator // denominator # Integer division
-                    remainder = abs_numerator % denominator
-                    if numerator < 0:
-                        integer = -integer                    
-                    if '.' in (str(exp)):
-                        result = str(exp.evalf(10)).rstrip('0').rstrip('.')
-                    else:                        
-                        if integer == 0 and remainder == 0:
-                            result = "0"
-                        elif integer == 0 and remainder != 0: 
-                            result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
-                        elif integer != 0 and remainder == 0:
-                            result = f"{integer}"
-                        elif integer != 0 and remainder != 0:
-                            result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                            
-                    print(f"----result: {result}")
-                except Exception as e:
-                    result = (str(e))                
+                result = self.get_mixed_number(ex)                
                 return (format_(expression_out),result)
             
             elif isinstance(calculator_state, OperatorInputStateData):
@@ -179,30 +183,7 @@ class ComputeServices:
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
                 ex = self.preprocess_expression(expression_out)
-                try:                    
-                    exp = sp.sympify(ex)
-                    fraction = sp.Rational(exp)
-                    abs_numerator = abs(fraction.numerator)
-                    numerator = fraction.numerator
-                    denominator = fraction.denominator
-                    integer = abs_numerator // denominator # Integer division
-                    remainder = abs_numerator % denominator
-                    if numerator < 0:
-                        integer = -integer                    
-                    if '.' in (str(exp)):
-                        result = str(exp.evalf(10)).rstrip('0').rstrip('.')
-                    else:                        
-                        if integer == 0 and remainder == 0:
-                            result = "0"
-                        elif integer == 0 and remainder != 0: 
-                            result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
-                        elif integer != 0 and remainder == 0:
-                            result = f"{integer}"
-                        elif integer != 0 and remainder != 0:
-                            result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                
-                    print(f"----result: {result}")
-                except Exception as e:
-                    result = " "                
+                result = self.get_mixed_number(ex)                
                 return (format_(expression_out),result)
             
             elif isinstance(calculator_state, FunctionInputStateData):
