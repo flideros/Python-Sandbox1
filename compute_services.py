@@ -134,22 +134,25 @@ class ComputeServices:
                 ex = self.preprocess_expression(expression)
                 try:                    
                     exp = sp.sympify(ex)
-                    expr = sp.Rational(exp)
-                    integer = expr // 1 # Integer division
-                    fraction = expr - integer
+                    fraction = sp.Rational(exp)
+                    abs_numerator = abs(fraction.numerator)
                     numerator = fraction.numerator
                     denominator = fraction.denominator
+                    integer = abs_numerator // denominator # Integer division
+                    remainder = abs_numerator % denominator
+                    if numerator < 0:
+                        integer = -integer                    
                     if '.' in (str(exp)):
                         result = str(exp.evalf(10)).rstrip('0').rstrip('.')
                     else:                        
-                        if integer == 0 and fraction == 0:
+                        if integer == 0 and remainder == 0:
                             result = "0"
-                        elif integer == 0 and fraction != 0: 
-                            result = f"\\\\frac{{{numerator}}}{{{denominator}}}"
-                        elif integer != 0 and fraction == 0:
+                        elif integer == 0 and remainder != 0: 
+                            result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
+                        elif integer != 0 and remainder == 0:
                             result = f"{integer}"
-                        elif integer != 0 and fraction != 0:
-                            result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                            
+                        elif integer != 0 and remainder != 0:
+                            result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                            
                     print(f"----result: {result}")
                 except Exception as e:
                     result = (str(e))                
@@ -178,22 +181,25 @@ class ComputeServices:
                 ex = self.preprocess_expression(expression_out)
                 try:                    
                     exp = sp.sympify(ex)
-                    expr = sp.Rational(exp)
-                    integer = expr // 1 # Integer division
-                    fraction = expr - integer
+                    fraction = sp.Rational(exp)
+                    abs_numerator = abs(fraction.numerator)
                     numerator = fraction.numerator
                     denominator = fraction.denominator
+                    integer = abs_numerator // denominator # Integer division
+                    remainder = abs_numerator % denominator
+                    if numerator < 0:
+                        integer = -integer                    
                     if '.' in (str(exp)):
                         result = str(exp.evalf(10)).rstrip('0').rstrip('.')
                     else:                        
-                        if integer == 0 and fraction == 0:
+                        if integer == 0 and remainder == 0:
                             result = "0"
-                        elif integer == 0 and fraction != 0: 
-                            result = f"\\\\frac{{{numerator}}}{{{denominator}}}"
-                        elif integer != 0 and fraction == 0:
+                        elif integer == 0 and remainder != 0: 
+                            result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
+                        elif integer != 0 and remainder == 0:
                             result = f"{integer}"
-                        elif integer != 0 and fraction != 0:
-                            result = f"{integer} \\\\frac{{{numerator}}}{{{denominator}}}"                
+                        elif integer != 0 and remainder != 0:
+                            result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                
                     print(f"----result: {result}")
                 except Exception as e:
                     result = " "                
