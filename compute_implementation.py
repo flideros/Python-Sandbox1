@@ -6,7 +6,7 @@ from calculator_domain import (
     AccumulatorStateData, ZeroStateData, ComputedStateData, ErrorStateData, MathOperationError,
     CalculatorInput, CalculatorMathOp, NonZeroDigit, DigitAccumulator, PendingOp, CalculatorState,
     StartStateData,  NumberInputStateData, OperatorInputStateData, ResultStateData, evaluate_expression,
-    ParenthesisOpenStateData, FunctionInputStateData, Compound, Value, Operator, Parenthesis
+    ParenthesisOpenStateData, FunctionInputStateData, Compound, Value, Operator, Parenthesis, Function
 )
 from calculator_services import CalculatorServices
 from compute_services import ComputeServices
@@ -48,19 +48,17 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   current_value = ' ',
                                                   expression_tree = new_tree,
                                                   memory = " ")
-                #elif _input_value in [CalculatorMathOp.ADD]:
-                    #print(f"Math Operation Input {_input_value} - Stay in StartState")
-                    #return StartStateData(memory = " ")
             
             elif input_type == 'FUNCTION':   
-                print("Parenthesis Open Input - Transition to ParenthesisOpenState")
+                print("Function Input - Transition to FunctionInputState")                
                 new_compound = Compound([])            
-                new_tree = Compound([Parenthesis(new_compound)])
+                function = Function(new_compound,services.sqrt_func)
+                new_tree = Compound([function])
                 new_stack = [(state_data,new_tree)]
-                return FunctionInputStateData(inner_expression = "Sqrt(",                                        
-                                                expression_tree = new_compound,
-                                                memory = " ",
-                                                stack = new_stack)
+                return FunctionInputStateData(current_value = "sqrt(",                                        
+                                              expression_tree = new_compound,
+                                              memory = " ",
+                                              stack = new_stack)
                 
         elif input == CalculatorInput.DECIMALSEPARATOR:
             print("Decimal Seperator Input - Transition to NumberInputState")
@@ -468,7 +466,31 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         return state_data  # Return the current state if no condition matches
     
-    def handle_function_input_state(state_data: FunctionInputStateData, input) -> CalculatorState: pass
+    def handle_function_input_state(state_data: FunctionInputStateData, input) -> CalculatorState:
+        
+        if input == CalculatorInput.ZERO:
+            print("Zero Input - Transition to NumberInputState")
+            digits = services.get_digit_display()
+            value = Value(value=digits)
+            state_data.expression_tree.expressions.append(value)
+            return NumberInputStateData(current_value = digits,
+                                        expression_tree = state_data.expression_tree,
+                                        memory = state_data.memory,
+                                        stack = state_data.stack)        
+            
+        elif isinstance(input, tuple):
+            input_type, _input_value = input
+            input_value = _input_value.value
+        
+            if input_type == 'DIGIT' and input_value in range(1, 10):
+                print(f"Digit Input {input_value} - Transition to NumberInputState")
+                digits = services.get_digit_display()
+                value = Value(value=digits)
+                state_data.expression_tree.expressions.append(value)
+                return NumberInputStateData(current_value = digits,
+                                            expression_tree = state_data.expression_tree,
+                                            memory = state_data.memory,
+                                            stack = state_data.stack)
     
     def handle_result_state(state_data: ResultStateData, input) -> CalculatorState: 
         

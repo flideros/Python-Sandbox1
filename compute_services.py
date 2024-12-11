@@ -40,7 +40,7 @@ class ComputeServices:
                 if token.isdigit():
                     exprs.append(Number(token))
                     index += 1
-                elif token == 'sqrt':
+                elif token == 'Sqrt':
                     sub_expr, index = parse_function(tokens, index)
                     exprs.append(sub_expr)
                 elif token in '+-*/':
@@ -61,7 +61,7 @@ class ComputeServices:
             if tokens[index] != '(':
                 raise ValueError("Expected '(' after function name")
             sub_expr, index = parse_inner(tokens, index + 1)
-            if func_name == 'sqrt':
+            if func_name == 'Sqrt':
                 func = self.sqrt_func
             else:
                 raise ValueError(f"Unknown function: {func_name}")
@@ -71,13 +71,14 @@ class ComputeServices:
         return expr_tree
     
     def sqrt_func(self, x: str) -> str:
-        return f"sqrt({x})"
+        print(f"x: {x}")
+        return f"\\\\sqrt({x})"
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
                  
     def get_digit_display(self):
-        out = self.digit_display
+        out = self.digit_display        
         return out
     
     def preprocess_expression(self,expression:str) -> str:
@@ -189,7 +190,16 @@ class ComputeServices:
                 return (format_(expression_out),result)
             
             elif isinstance(calculator_state, FunctionInputStateData):
-                return (calculator_state.expression_tree, None)
+                if calculator_state.stack is not None and len(calculator_state.stack) > 0:
+                    _state, exp = calculator_state.stack[0]
+                    expression = evaluate_expression(exp)
+                    expression_out = expression[:-len(calculator_state.stack)]                    
+                else:
+                    expression_out = evaluate_expression(calculator_state.expression_tree)
+                ex = self.preprocess_expression(expression_out)                
+                result = self.get_mixed_number(ex)
+                print(expression_out)
+                return (format_(expression_out),result)
                 
             elif isinstance(calculator_state, ErrorStateData):
                 return (error_msg + calculator_state.math_error.value, None)

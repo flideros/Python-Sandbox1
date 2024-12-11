@@ -173,7 +173,7 @@ class FourFunctionCalculator(QWidget):
                 button.setEnabled(False) # Initially disabled
                 button.setToolTip("Select a function first")
             self.function_button_grid_layout.addWidget(button, row, col)
-            button.clicked.connect(self.create_handler(text))
+            button.clicked.connect(self.create_handler(text))            
             self.buttons[(row, col)] = button
             
     def setup_utility_buttons(self, button_style):        
@@ -205,10 +205,27 @@ class FourFunctionCalculator(QWidget):
     def update_button_text(self, text):
         if text != "Select":
             button = self.buttons[(2, 1)]
-            self.buttons[(2, 1)].setText(text)
-            self.buttons[(2, 1)].setEnabled(True) # Enable the button when a function is selected
-            self.buttons[(2, 1)].setToolTip("") # Remove the tooltip when active
-            self.combo_box.setCurrentIndex(0) # Reset the combo box to display "Select"
+            button.setText(text)
+            button.setEnabled(True)  # Enable the button when a function is selected
+            button.setToolTip("")  # Remove the tooltip when active
+            self.combo_box.setCurrentIndex(0)  # Reset the combo box to display "Select"
+
+            # Disconnect the existing handler, if any
+            try:
+                button.clicked.disconnect()
+            except TypeError:
+                pass  # No existing connection to disconnect
+
+            # Connect the new handler
+            button.clicked.connect(self.create_handler(text))
+
+    #def update_button_text(self, text):
+        #if text != "Select":
+            #button = self.buttons[(2, 1)]
+            #self.buttons[(2, 1)].setText(text)
+            #self.buttons[(2, 1)].setEnabled(True) # Enable the button when a function is selected
+            #self.buttons[(2, 1)].setToolTip("") # Remove the tooltip when active
+            #self.combo_box.setCurrentIndex(0) # Reset the combo box to display "Select"
 
     # Function to bind handler to an action
     def create_handler(self, text):
