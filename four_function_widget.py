@@ -25,7 +25,7 @@ class FourFunctionCalculator(QWidget):
         # Set up services and state        
         services = ComputeServices()
         self.services = services
-        self.state = self.services.initial_state
+        self.state = services.initial_state
         self.compute = create_compute(services)
         self.current_input = None
                 
@@ -240,8 +240,9 @@ class FourFunctionCalculator(QWidget):
             
         #output_text, result = self.services.get_display_from_state("Error:")(self.state)
         # Update mathquill output for non-digit input
-        if input_text in ['Minus','Plus','Divide by','Times','(',')']:
+        if input_text in ['Minus','Plus','Divide by','Times','(',')','Sqrt']:
             # Emit the reset signal
+            
             output_text, result = self.services.get_display_from_state("Error:")(self.state)
             self.resetSignal.emit()             
             # Update mathquil expression

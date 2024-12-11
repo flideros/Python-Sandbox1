@@ -37,9 +37,10 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             expression_tree = Compound([value]),
                                             memory = " ")
             
-            elif input_type == 'MATHOP':   
-                print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
-                if _input_value == CalculatorMathOp.SUBTRACT: 
+            elif input_type == 'MATHOP':                
+                if _input_value == CalculatorMathOp.SUBTRACT:
+                    print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
+                    print(f"Math Operation Input {_input_value} - Transition to OperatorInputState")
                     operator_expr = Operator(operator='-')
                     new_tree = Compound([operator_expr])
                     return OperatorInputStateData(previous_value = ' ',
@@ -47,6 +48,19 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   current_value = ' ',
                                                   expression_tree = new_tree,
                                                   memory = " ")
+                #elif _input_value in [CalculatorMathOp.ADD]:
+                    #print(f"Math Operation Input {_input_value} - Stay in StartState")
+                    #return StartStateData(memory = " ")
+            
+            elif input_type == 'FUNCTION':   
+                print("Parenthesis Open Input - Transition to ParenthesisOpenState")
+                new_compound = Compound([])            
+                new_tree = Compound([Parenthesis(new_compound)])
+                new_stack = [(state_data,new_tree)]
+                return FunctionInputStateData(inner_expression = "Sqrt(",                                        
+                                                expression_tree = new_compound,
+                                                memory = " ",
+                                                stack = new_stack)
                 
         elif input == CalculatorInput.DECIMALSEPARATOR:
             print("Decimal Seperator Input - Transition to NumberInputState")
@@ -74,7 +88,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             memory = " ",
                                             stack = new_stack)
         
-        return state_data  # Return the current state if no condition matches    
+        return StartStateData(memory = " ")  # Return the current state if no condition matches    
     
     def handle_number_input_state(state_data: NumberInputStateData, input) -> CalculatorState:
         if input == CalculatorInput.ZERO:

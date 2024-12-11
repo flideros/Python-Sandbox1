@@ -122,7 +122,9 @@ class ComputeServices:
             integer = abs_numerator // denominator # Integer division
             remainder = abs_numerator % denominator
             if numerator < 0:
-                integer = -integer                    
+                integer = -integer
+            if integer == 0 and numerator < 0:
+                remainder = -remainder                
             if '.' in (str(exp)):
                 result = str(exp.evalf(10)).rstrip('0').rstrip('.')
             else:                        
@@ -147,7 +149,7 @@ class ComputeServices:
             return exp.replace('*','\\\\times').replace('/','\\\\div')
         
         def inner(calculator_state) -> str:
-            if isinstance(calculator_state, StartStateData):
+            if isinstance(calculator_state, StartStateData):                
                 return (self.digit_display, " ")
             
             elif isinstance(calculator_state, NumberInputStateData):                
@@ -173,7 +175,7 @@ class ComputeServices:
                 return (format_(expression_out),result)
             
             elif isinstance(calculator_state, ResultStateData):
-                return (" ",None)
+                return (" ", None)
             
             elif isinstance(calculator_state, ParenthesisOpenStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
