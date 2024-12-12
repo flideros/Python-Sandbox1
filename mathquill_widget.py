@@ -59,8 +59,8 @@ class MathQuillWidget(QWidget):
         self.web_page = CustomWebEnginePage(self)
         self.web_view.setPage(self.web_page)
         self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.web_view.setFixedHeight(50)  # Initial and minimum height
-        self.web_view.setMinimumHeight(50)  # Set minimum height to 50 pixels
+        self.web_view.setFixedHeight(64)  # Initial and minimum height
+        self.web_view.setMinimumHeight(50)  # Set minimum height to 60 pixels
 
         layout.addWidget(self.web_view, 0, Qt.AlignmentFlag.AlignBottom)
         
@@ -71,7 +71,7 @@ class MathQuillWidget(QWidget):
         self.frame.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.frame_layout = QVBoxLayout(self.frame)
         self.frame_layout.setContentsMargins(0, 0, 0, 0)  # Set frame layout margins to 0
-        self.frame_layout.setSpacing(5)  # Adjust spacing within frame
+        self.frame_layout.setSpacing(0)  # Adjust spacing within frame
         self.frame.setVisible(False)  # Hide frame by default
 
         self.latex_label = QLabel("LaTeX Output: ")

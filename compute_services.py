@@ -76,7 +76,14 @@ class ComputeServices:
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
-                 
+    
+    def add_parentheses_if_needed(self, text):
+        # Check if the string contains a plus or minus sign
+        if re.search(r'[+-]', text):
+            # Add parentheses around the string
+            text = f'({text})'
+        return text
+    
     def get_digit_display(self):
         out = self.digit_display        
         return out
@@ -89,19 +96,25 @@ class ComputeServices:
         pattern1 = r"\\\\class\{result-box\}\{(-?\d+)\}" # Integer
         pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
         pattern3 = r"\\\\class\{result-box\}\{(-?\d+\.\d+)\}" # Decimal
+        pattern4 = r"\\\\class\{result-box\}\{(.*?)\}" # other
         # Insert multiplication between number and parenthesis to allow implicit multiplication
-        pattern4 = r'(\d)(\()'
-        pattern5 = r'(\))(\d)'
-        pattern6 = r'(\))(\()'
-        pattern7 = r'\1*\2' # Insert multiplication
+        pattern5 = r'(\d)(\()' # Group 1: digit, Group 2: open parenthesis
+        pattern6 = r'(\))(\d)' # Group 1: close parenthesis, Group 2: digit
+        pattern7 = r'(\))(\()' # Group 1: close parenthesis, Group 2: open parenthesis
+        pattern8 = r'(\d)(sqrt)' # Group 1: digit, Group 2: 'sqrt'
+        pattern9 = r'(\))(sqrt)' # Between close parenthesis and sqrt
+        
+        patternA = r'\1*\2' # Insert multiplication
         # Process expression with patterns 
         processed_expression = re.sub(pattern1, replace_with_number, expression)
         processed_expression = re.sub(pattern2, replace_with_number, processed_expression)
         processed_expression = re.sub(pattern3, replace_with_number, processed_expression)        
-        processed_expression = re.sub(pattern4, pattern7, processed_expression)
-        processed_expression = re.sub(pattern5, pattern7, processed_expression)
-        processed_expression = re.sub(pattern6, pattern7, processed_expression)
-        
+        processed_expression = re.sub(pattern4, replace_with_number, processed_expression)
+        processed_expression = re.sub(pattern5, patternA, processed_expression)
+        processed_expression = re.sub(pattern6, patternA, processed_expression)
+        processed_expression = re.sub(pattern7, patternA, processed_expression)
+        processed_expression = re.sub(pattern8, patternA, processed_expression)
+        processed_expression = re.sub(pattern9, patternA, processed_expression)        
         return processed_expression
     
     def get_decimal_value(self, expression):
@@ -112,42 +125,79 @@ class ComputeServices:
     def simplify_expression(self, expression):
         exp = self.preprocess_expression(expression)
         return sp.sympify(exp)
-    
+
     def get_mixed_number(self, expression: str):
-        try:                    
+        try:
+            print("Expression received:", expression)
             exp = sp.sympify(expression)
-            fraction = sp.Rational(exp)
-            abs_numerator = abs(fraction.numerator)
-            numerator = fraction.numerator
-            denominator = fraction.denominator
-            integer = abs_numerator // denominator # Integer division
-            remainder = abs_numerator % denominator
-            if numerator < 0:
-                integer = -integer
-            if integer == 0 and numerator < 0:
-                remainder = -remainder                
-            if '.' in (str(exp)):
-                result = str(exp.evalf(10)).rstrip('0').rstrip('.')
-            else:                        
+            print("Sympified expression:", exp)
+            
+            # Convert the expression to a string to replace sqrt and fractions
+            result = str(exp)
+            
+            # Function to convert fraction to mixed number
+            def to_mixed_fraction(match):
+                numerator = int(match.group(1))
+                denominator = int(match.group(2))
+                integer = numerator // denominator
+                remainder = numerator % denominator
+                if integer != 0 and remainder != 0:
+                    return f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
+                elif integer != 0:
+                    return f"{integer}"
+                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"
+            
+            # Handle square root expressions: sqrt(anything)
+            result = re.sub(r'sqrt\(([^)]+)\)', r'\\\\sqrt{{{\1}}}', result)
+            # Replace '/' with '\frac{{{}}}' in the entire result
+            result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
+            result = re.sub(r'(.*?)/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            result = re.sub(r'(\d+)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            result = re.sub(r'(.*?)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            
+            # Handle mixed numbers
+            if 'sqrt' not in result and 'I' not in result:
+                fraction = sp.Rational(exp)
+                abs_numerator = abs(fraction.numerator)
+                numerator = fraction.numerator
+                denominator = fraction.denominator
+                integer = abs_numerator // denominator  # Integer division
+                remainder = abs_numerator % denominator
+                
+                print(f"Numerator: {numerator}, Denominator: {denominator}, Integer: {integer}, Remainder: {remainder}")
+
+                if numerator < 0:
+                    integer = -integer
+                if integer == 0 and numerator < 0:
+                    remainder = -remainder
+
                 if integer == 0 and remainder == 0:
                     result = "0"
-                elif integer == 0 and remainder != 0: 
+                elif integer == 0 and remainder != 0:
                     result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
                 elif integer != 0 and remainder == 0:
                     result = f"{integer}"
                 elif integer != 0 and remainder != 0:
-                    result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"                            
-            print(f"----result: {result}")
+                    result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
+                print("Mixed number handled: result =", result)
+            
+            # Return a decimal number if a decimal seperator is present.
+            if '.' in (str(exp)):
+                result = str(exp.evalf(10)).rstrip('0').rstrip('.')
+            
+            print(f"----final result: {result}")
         except Exception as e:
-            result = (str(e))
+            print(f"----error: {e} ")
+            result = " "  # or str(e)
         return result
+
     
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
         """
         def format_(exp:str) -> str:
-            return exp.replace('*','\\\\times').replace('/','\\\\div')
+            return exp.replace('*','\\\\times').replace('/','\\\\div').replace('sqrt','\\\\sqrt').replace('I',' I')
         
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):                

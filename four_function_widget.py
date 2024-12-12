@@ -110,10 +110,11 @@ class FourFunctionCalculator(QWidget):
         self.label = QLabel('This is a label', self)
         self.vbox.addWidget(self.label)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.hide()
         
         # Math Quill widget for math output and input
         self.mathquill_stack_widget = MathQuillStackWidget(self)
-        # self.mathquill_stack_widget.set_controls_visibility(True)
+        #self.mathquill_stack_widget.set_controls_visibility(True)
         self.vbox.addWidget(self.mathquill_stack_widget)
         
         self.mathquill_stack_widget.widgetClicked.connect(self.update_label)
