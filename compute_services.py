@@ -79,7 +79,7 @@ class ComputeServices:
     
     def add_parentheses_if_needed(self, text):
         # Check if the string contains a plus or minus sign
-        if re.search(r'[+-]', text):
+        if re.search(r'[+-/*]', text):
             # Add parentheses around the string
             text = f'({text})'
         return text
@@ -110,7 +110,7 @@ class ComputeServices:
         pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
         pattern3 = r"\\\\class\{result-box\}\{(-?\d+\.\d+)\}" # Decimal
         
-        pattern4 = r"\\\\class\{result-box\}\{(.*?)\}" # other
+        pattern4 = r"\\\\class\{result-box\}\{((.*?)\))\}" # other
         
         # Insert multiplication between number and parenthesis to allow implicit multiplication
         pattern5 = r'(\d)(\()' # Group 1: digit, Group 2: open parenthesis
@@ -165,16 +165,31 @@ class ComputeServices:
                 elif integer != 0:
                     return f"{integer}"
                 else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"            
+            def format_sqrt(exp):                
+                # Format the innermost sqrt first
+                def replacer(match):
+                    return f"sqrt{{{(match.group(1))}}}"
+                # Apply the replacement recursively for nested sqrt
+                while 'sqrt(' in exp:
+                    exp = re.sub(r'sqrt\(([^()]+)\)', replacer, exp)
+                if len(exp) > 5 and exp[5] == '\\frac':
+                    print("test")
+                    return exp
+                exp = re.sub(r'sqrt(\((.*?)\))', r'sqrt{\(\1\)}', exp)
+                return exp # Test case exp = "sqrt(sqrt(2) + 3)"
+            
             # Handle '**' by replacing it with '^{}
             result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)
             # Handle square root expressions: sqrt(anything)
-            result = re.sub(r'sqrt\(([^)]+)\)', r'\\\\sqrt{\(\1\)}', result)
+            result = format_sqrt(result)
             # Replace '/' with '\frac{{{}}}' in the entire result
             result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
-            result = re.sub(r'(.*?)/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            result = re.sub(r'(\d+)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            result = re.sub(r'(.*?)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-                                   
+            result = re.sub(r'(\d+)/(\((.*?)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            result = re.sub(r'(\((.*?)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
+            #result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
+            # Handle square root expressions: sqrt(anything)
+            result = format_sqrt(result)                          
+              
             # Handle mixed numbers
             if 'sqrt' not in result and 'I' not in result:
                 try:

@@ -114,7 +114,7 @@ class FourFunctionCalculator(QWidget):
         
         # Math Quill widget for math output and input
         self.mathquill_stack_widget = MathQuillStackWidget(self)
-        #self.mathquill_stack_widget.set_controls_visibility(True)
+        self.mathquill_stack_widget.set_controls_visibility(True)
         self.vbox.addWidget(self.mathquill_stack_widget)
         
         self.mathquill_stack_widget.widgetClicked.connect(self.update_label)
@@ -219,14 +219,6 @@ class FourFunctionCalculator(QWidget):
 
             # Connect the new handler
             button.clicked.connect(self.create_handler(text))
-
-    #def update_button_text(self, text):
-        #if text != "Select":
-            #button = self.buttons[(2, 1)]
-            #self.buttons[(2, 1)].setText(text)
-            #self.buttons[(2, 1)].setEnabled(True) # Enable the button when a function is selected
-            #self.buttons[(2, 1)].setToolTip("") # Remove the tooltip when active
-            #self.combo_box.setCurrentIndex(0) # Reset the combo box to display "Select"
 
     # Function to bind handler to an action
     def create_handler(self, text):
