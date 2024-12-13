@@ -604,6 +604,8 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         expression_tree = state_data.expression_tree,
                                         memory = state_data.memory,
                                         stack = state_data.stack)
+        
+        return state_data  # Return the current state if no condition matches
     
     def handle_result_state(state_data: ResultStateData, input) -> CalculatorState: 
         

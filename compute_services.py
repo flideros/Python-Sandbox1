@@ -72,7 +72,7 @@ class ComputeServices:
     
     def sqrt_func(self, x: str) -> str:
         print(f"x: {x}")
-        return f"\\\\sqrt({x})"
+        return '\\\\sqrt({x})'
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -83,6 +83,19 @@ class ComputeServices:
             # Add parentheses around the string
             text = f'({text})'
         return text
+    
+    def replace_sqrt(self,exp):       
+        # Define a function to replace sqrt recursively        
+        def replace(match):
+            inner_exp = match.group(1)
+            # Replace nested sqrt inside the current match
+            nested_exp = re.sub(r'sqrt\(([^()]+)\)', replace, inner_exp)
+            return f'\\sqrt{{\\({nested_exp}\\)}}'
+        
+        # Replace all sqrt expressions, including nested ones
+        while re.search(r'sqrt\(([^()]+)\)', exp):
+            exp = re.sub(r'sqrt\(([^()]+)\)', replace, exp)
+        return exp
     
     def get_digit_display(self):
         out = self.digit_display        
@@ -96,7 +109,9 @@ class ComputeServices:
         pattern1 = r"\\\\class\{result-box\}\{(-?\d+)\}" # Integer
         pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
         pattern3 = r"\\\\class\{result-box\}\{(-?\d+\.\d+)\}" # Decimal
+        
         pattern4 = r"\\\\class\{result-box\}\{(.*?)\}" # other
+        
         # Insert multiplication between number and parenthesis to allow implicit multiplication
         pattern5 = r'(\d)(\()' # Group 1: digit, Group 2: open parenthesis
         pattern6 = r'(\))(\d)' # Group 1: close parenthesis, Group 2: digit
@@ -126,6 +141,11 @@ class ComputeServices:
         exp = self.preprocess_expression(expression)
         return sp.sympify(exp)
 
+    def add_backslashes(self,exp):
+        # Step 1: Find instances of 'sqrt' missing backslashes and add them
+        exp = re.sub(r'(?<!\\)sqrt', r'\\\\sqrt', exp)                
+        return exp
+    
     def get_mixed_number(self, expression: str):
         try:
             print("Expression received:", expression)
@@ -133,8 +153,7 @@ class ComputeServices:
             print("Sympified expression:", exp)
             
             # Convert the expression to a string to replace sqrt and fractions
-            result = str(exp)
-            
+            result = str(exp)            
             # Function to convert fraction to mixed number
             def to_mixed_fraction(match):
                 numerator = int(match.group(1))
@@ -145,41 +164,45 @@ class ComputeServices:
                     return f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
                 elif integer != 0:
                     return f"{integer}"
-                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"
-            
+                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"            
+            # Handle '**' by replacing it with '^{}
+            result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)
             # Handle square root expressions: sqrt(anything)
-            result = re.sub(r'sqrt\(([^)]+)\)', r'\\\\sqrt{{{\1}}}', result)
+            result = re.sub(r'sqrt\(([^)]+)\)', r'\\\\sqrt{\(\1\)}', result)
             # Replace '/' with '\frac{{{}}}' in the entire result
             result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
             result = re.sub(r'(.*?)/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
             result = re.sub(r'(\d+)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
             result = re.sub(r'(.*?)/(.*?)', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            
+                                   
             # Handle mixed numbers
             if 'sqrt' not in result and 'I' not in result:
-                fraction = sp.Rational(exp)
-                abs_numerator = abs(fraction.numerator)
-                numerator = fraction.numerator
-                denominator = fraction.denominator
-                integer = abs_numerator // denominator  # Integer division
-                remainder = abs_numerator % denominator
-                
-                print(f"Numerator: {numerator}, Denominator: {denominator}, Integer: {integer}, Remainder: {remainder}")
+                try:
+                    fraction = sp.Rational(exp)
+                    abs_numerator = abs(fraction.numerator)
+                    numerator = fraction.numerator
+                    denominator = fraction.denominator
+                    integer = abs_numerator // denominator  # Integer division
+                    remainder = abs_numerator % denominator
+                    
+                    print(f"Numerator: {numerator}, Denominator: {denominator}, Integer: {integer}, Remainder: {remainder}")
 
-                if numerator < 0:
-                    integer = -integer
-                if integer == 0 and numerator < 0:
-                    remainder = -remainder
+                    if numerator < 0:
+                        integer = -integer
+                    if integer == 0 and numerator < 0:
+                        remainder = -remainder
 
-                if integer == 0 and remainder == 0:
-                    result = "0"
-                elif integer == 0 and remainder != 0:
-                    result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
-                elif integer != 0 and remainder == 0:
-                    result = f"{integer}"
-                elif integer != 0 and remainder != 0:
-                    result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
-                print("Mixed number handled: result =", result)
+                    if integer == 0 and remainder == 0:
+                        result = "0"
+                    elif integer == 0 and remainder != 0:
+                        result = f"\\\\frac{{{remainder}}}{{{denominator}}}"
+                    elif integer != 0 and remainder == 0:
+                        result = f"{integer}"
+                    elif integer != 0 and remainder != 0:
+                        result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
+                    print("Mixed number handled: result =", result)
+                except Exception as e:
+                    result = result
             
             # Return a decimal number if a decimal seperator is present.
             if '.' in (str(exp)):
@@ -189,6 +212,8 @@ class ComputeServices:
         except Exception as e:
             print(f"----error: {e} ")
             result = " "  # or str(e)
+        
+        result = self.add_backslashes(result)
         return result
 
     
@@ -197,7 +222,17 @@ class ComputeServices:
         Returns the display strings based on the current state of the computation.
         """
         def format_(exp:str) -> str:
-            return exp.replace('*','\\\\times').replace('/','\\\\div').replace('sqrt','\\\\sqrt').replace('I',' I')
+            exp = self.replace_sqrt(exp)            
+            exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\sqrt')            
+            def format_outer_sqrt(exp):
+                # Step 1: Remove existing backslashes
+                exp = exp.replace(r'\\', '')            
+                # Step 2: Format only the outer sqrt content
+                exp = re.sub(r'sqrt\((.*?})\)', r'sqrt{\(\1\)}', exp)            
+                # Step 3: Add the backslashes back in and ensure all parts are correctly enclosed
+                exp = exp.replace('sqrt', r'\\sqrt').replace('times', r'\\times').replace('class', r'\\class').replace('div', r'\\div')            
+                return exp
+            return format_outer_sqrt(exp)
         
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):                
@@ -207,13 +242,14 @@ class ComputeServices:
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression[:-len(calculator_state.stack)]
+                    expression_out = expression#[:-len(calculator_state.stack)]
                 else:
                     expression = evaluate_expression(calculator_state.expression_tree)
                     expression_out = expression
                 ex = self.preprocess_expression(expression)
                 result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result)
+                print(expression_out)
+                return (format_(expression_out),result.replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
@@ -223,7 +259,7 @@ class ComputeServices:
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree) 
                 result = " "                
-                return (format_(expression_out),result)
+                return (format_(expression_out),result.replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, ResultStateData):
                 return (" ", None)
@@ -237,7 +273,7 @@ class ComputeServices:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
                 ex = self.preprocess_expression(expression_out)
                 result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result)
+                return (format_(expression_out),result.replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
@@ -249,7 +285,7 @@ class ComputeServices:
                 ex = self.preprocess_expression(expression_out)                
                 result = self.get_mixed_number(ex)
                 print(expression_out)
-                return (format_(expression_out),result)
+                return (format_(expression_out),result.replace('*','\\\\cdot'))
                 
             elif isinstance(calculator_state, ErrorStateData):
                 return (error_msg + calculator_state.math_error.value, None)
