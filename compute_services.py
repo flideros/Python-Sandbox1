@@ -203,8 +203,6 @@ class ComputeServices:
                     integer = abs_numerator // denominator  # Integer division
                     remainder = abs_numerator % denominator
                     
-                    print(f"Numerator: {numerator}, Denominator: {denominator}, Integer: {integer}, Remainder: {remainder}")
-
                     if numerator < 0:
                         integer = -integer
                     if integer == 0 and numerator < 0:
@@ -218,15 +216,13 @@ class ComputeServices:
                         result = f"{integer}"
                     elif integer != 0 and remainder != 0:
                         result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
-                    print("Mixed number handled: result =", result)
                 except Exception as e:
                     result = result
             
             # Return a decimal number if a decimal seperator is present.
             if '.' in (str(exp)):
                 result = str(exp.evalf(10)).rstrip('0').rstrip('.')
-            
-            print(f"----final result: {result}")
+
         except Exception as e:
             print(f"----error: {e} ")
             result = " "  # or str(e)
@@ -241,6 +237,10 @@ class ComputeServices:
         """
         def format_(exp:str) -> str:
             exp = self.replace_sqrt(exp)            
+            
+            # Handle '**' by replacing it with '^{}
+            exp = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', exp)
+            
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\sqrt')            
             def format_outer_sqrt(exp):
                 # Step 1: Remove existing backslashes
