@@ -91,14 +91,10 @@ class ComputeServices:
             # Replace nested sqrt inside the current match r'sqrt(\((.*?)\))'
             nested_exp = re.sub(r'sqrt(\((.*?)\))', replace, inner_exp)
             #nested_exp = re.sub(r'sqrt\(([^()]+)\)', replace, inner_exp)
-            return f'sqrt{{\\({nested_exp}\\)}}'
-        
-        # Replace all sqrt expressions, including nested ones
-        #while re.search(r'sqrt\(([^()]+)\)', exp):
-            #exp = re.sub(r'sqrt\(([^()]+)\)', replace, exp)
+            return f'sqrt{{{nested_exp}}}'        
+        # Replace all sqrt expressions, including nested ones        
         while re.search(r'sqrt(\((.*?)\))', exp):
-            exp = re.sub(r'sqrt\((.*?)\)', replace, exp)
-            
+            exp = re.sub(r'sqrt(\((.*?)\))', replace, exp)  
         return exp
     
     def get_digit_display(self):
@@ -167,32 +163,18 @@ class ComputeServices:
                     return f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
                 elif integer != 0:
                     return f"{integer}"
-                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"            
-            def format_sqrt(exp):                
-                # Format the innermost sqrt first
-                def replacer(match):
-                    return f"sqrt{{{(match.group(1))}}}"
-                # Apply the replacement recursively for nested sqrt
-                while 'sqrt(' in exp:
-                    exp = re.sub(r'sqrt\(([^()]+)\)', replacer, exp)
-                if len(exp) > 5 and exp[5] == '\\frac':
-                    print("test")
-                    return exp
-                exp = re.sub(r'sqrt(\(([^()]+)\))', r'sqrt{\(\1\)}', exp)
-                return exp
+                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"
             
-            # Handle '**' by replacing it with '^{}
-            result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)
             # Handle square root expressions: sqrt(anything)
-            result = format_sqrt(result)
+            result = self.replace_sqrt(result)
+            # Handle '**' by replacing it with '^{}
+            result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)             
             # Replace '/' with '\frac{{{}}}' in the entire result
             result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
-            result = re.sub(r'(\d+)/(\((.*?)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            result = re.sub(r'(\((.*?)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
-            #result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
-            # Handle square root expressions: sqrt(anything)
-            result = format_sqrt(result)                          
-              
+            result = re.sub(r'(\d+)/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            result = re.sub(r'(\((.*)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
+            result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
+                        
             # Handle mixed numbers
             if 'sqrt' not in result and 'I' not in result:
                 try:
@@ -235,24 +217,12 @@ class ComputeServices:
         """
         Returns the display strings based on the current state of the computation.
         """
-        def format_(exp:str) -> str:
+        def format_(exp:str) -> str:            
             exp = self.replace_sqrt(exp)            
-            
             # Handle '**' by replacing it with '^{}
-            exp = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', exp)
-            
-            exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\sqrt')            
-            def format_outer_sqrt(exp):
-                # Step 1: Remove existing backslashes
-                exp = exp.replace(r'\\\\', '')
-                exp = exp.replace(r'\\', '')            
-                # Step 2: Format only the outer sqrt content
-                exp = re.sub(r'sqrt(\((.*?)\))', r'sqrt{\(\1\)}', exp)            
-                # Step 3: Add the backslashes back in and ensure all parts are correctly enclosed
-                exp = exp.replace('sqrt', r'\\sqrt').replace('times', r'\\times').replace('class', r'\\class').replace('div', r'\\div')            
-                exp = re.sub(r'\\\\\\', r'\\\\', exp)
-                return exp
-            return format_outer_sqrt(exp)
+            exp = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', exp)            
+            exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
+            return exp 
         
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):                
