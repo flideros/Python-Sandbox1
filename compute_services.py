@@ -269,7 +269,7 @@ class ComputeServices:
                 ex = self.preprocess_expression(expression)
                 result = self.get_mixed_number(ex)                
                 print(expression_out)
-                return (format_(expression_out),result.replace('*','\\\\cdot'))
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
@@ -279,7 +279,7 @@ class ComputeServices:
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree) 
                 result = " "                
-                return (format_(expression_out),result.replace('*','\\\\cdot'))
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, ResultStateData):
                 return (" ", None)
@@ -293,7 +293,7 @@ class ComputeServices:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
                 ex = self.preprocess_expression(expression_out)
                 result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result.replace('*','\\\\cdot'))
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
@@ -305,7 +305,7 @@ class ComputeServices:
                 ex = self.preprocess_expression(expression_out)                
                 result = self.get_mixed_number(ex)
                 print(expression_out)
-                return (format_(expression_out),result.replace('*','\\\\cdot'))
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
                 
             elif isinstance(calculator_state, ErrorStateData):
                 return (error_msg + calculator_state.math_error.value, None)
