@@ -88,13 +88,17 @@ class ComputeServices:
         # Define a function to replace sqrt recursively        
         def replace(match):
             inner_exp = match.group(1)
-            # Replace nested sqrt inside the current match
-            nested_exp = re.sub(r'sqrt\(([^()]+)\)', replace, inner_exp)
-            return f'\\sqrt{{\\({nested_exp}\\)}}'
+            # Replace nested sqrt inside the current match r'sqrt(\((.*?)\))'
+            nested_exp = re.sub(r'sqrt(\((.*?)\))', replace, inner_exp)
+            #nested_exp = re.sub(r'sqrt\(([^()]+)\)', replace, inner_exp)
+            return f'sqrt{{\\({nested_exp}\\)}}'
         
         # Replace all sqrt expressions, including nested ones
-        while re.search(r'sqrt\(([^()]+)\)', exp):
-            exp = re.sub(r'sqrt\(([^()]+)\)', replace, exp)
+        #while re.search(r'sqrt\(([^()]+)\)', exp):
+            #exp = re.sub(r'sqrt\(([^()]+)\)', replace, exp)
+        while re.search(r'sqrt(\((.*?)\))', exp):
+            exp = re.sub(r'sqrt\((.*?)\)', replace, exp)
+            
         return exp
     
     def get_digit_display(self):
@@ -142,8 +146,7 @@ class ComputeServices:
         return sp.sympify(exp)
 
     def add_backslashes(self,exp):
-        # Step 1: Find instances of 'sqrt' missing backslashes and add them
-        exp = re.sub(r'(?<!\\)sqrt', r'\\\\sqrt', exp)                
+        exp = re.sub(r'(?<!\\)sqrt', r'\\\\sqrt', exp)       
         return exp
     
     def get_mixed_number(self, expression: str):
@@ -175,8 +178,8 @@ class ComputeServices:
                 if len(exp) > 5 and exp[5] == '\\frac':
                     print("test")
                     return exp
-                exp = re.sub(r'sqrt(\((.*?)\))', r'sqrt{\(\1\)}', exp)
-                return exp # Test case exp = "sqrt(sqrt(2) + 3)"
+                exp = re.sub(r'sqrt(\(([^()]+)\))', r'sqrt{\(\1\)}', exp)
+                return exp
             
             # Handle '**' by replacing it with '^{}
             result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)
@@ -241,11 +244,13 @@ class ComputeServices:
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\sqrt')            
             def format_outer_sqrt(exp):
                 # Step 1: Remove existing backslashes
+                exp = exp.replace(r'\\\\', '')
                 exp = exp.replace(r'\\', '')            
                 # Step 2: Format only the outer sqrt content
-                exp = re.sub(r'sqrt\((.*?})\)', r'sqrt{\(\1\)}', exp)            
+                exp = re.sub(r'sqrt(\((.*?)\))', r'sqrt{\(\1\)}', exp)            
                 # Step 3: Add the backslashes back in and ensure all parts are correctly enclosed
                 exp = exp.replace('sqrt', r'\\sqrt').replace('times', r'\\times').replace('class', r'\\class').replace('div', r'\\div')            
+                exp = re.sub(r'\\\\\\', r'\\\\', exp)
                 return exp
             return format_outer_sqrt(exp)
         
