@@ -6,6 +6,13 @@
     <title>MathQuill in PyQt6</title>
     <link rel="stylesheet" href="resources/mathquill.min.css" />
     <style>
+        body::-webkit-scrollbar { 
+            display: none; 
+        }
+        body { 
+            scrollbar-width: none; 
+            overflow: auto; 
+        }
         body, html {
             height: 100%;
             width: 100%;
@@ -14,7 +21,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;  /* Prevent scrollbars */
+            scrollbar-width: none;
+            overflow: auto;  /* Prevent scrollbars */
         }
         .container {
             display: flex;
@@ -22,6 +30,11 @@
             justify-content: space-between;  /* Space between input and result */
             align-items: center;
             padding: 0 0px;
+        }
+        .scroll-container { 
+            overflow: auto; 
+            height: 100%; /* Adjust as needed */ 
+            width: 100%; /* Adjust as needed */ 
         }
         #mathquill-input {
             flex-grow: 1;

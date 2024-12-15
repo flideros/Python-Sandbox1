@@ -84,18 +84,44 @@ class ComputeServices:
             text = f'({text})'
         return text
     
-    def replace_sqrt(self,exp):       
-        # Define a function to replace sqrt recursively        
-        def replace(match):
-            inner_exp = match.group(1)
-            # Replace nested sqrt inside the current match r'sqrt(\((.*?)\))'
-            nested_exp = re.sub(r'sqrt(\((.*?)\))', replace, inner_exp)
-            #nested_exp = re.sub(r'sqrt\(([^()]+)\)', replace, inner_exp)
-            return f'sqrt{{{nested_exp}}}'        
-        # Replace all sqrt expressions, including nested ones        
-        while re.search(r'sqrt(\((.*?)\))', exp):
-            exp = re.sub(r'sqrt(\((.*?)\))', replace, exp)  
-        return exp
+    def replace_sqrt(self, exp):
+        def replace_all_sqrt(exp):
+            pattern = re.compile(r'sqrt\(([^()]*)\)')
+            while 'sqrt(' in exp:
+                matches = list(pattern.finditer(exp))
+                if not matches:
+                    break
+                for match in matches:
+                    start = match.start()
+                    end = match.end()
+                    inner_exp = match.group(1)
+                    exp = exp[:start] + f'sqrt{{{inner_exp}}}' + exp[end:]
+            return exp
+        
+        # Find fully balanced parentheses and replace
+        def replace_balanced_sqrt(exp):
+            if len(exp) >= 5:
+                if exp[-5:] == 'sqrt(':
+                    return exp
+            while True:
+                start_index = exp.find('sqrt(')
+                if start_index == -1:
+                    break
+                open_paren = 0
+                for i in range(start_index + 5, len(exp)):
+                    if exp[i] == '(':
+                        open_paren += 1
+                    elif exp[i] == ')':
+                        if open_paren == 0:
+                            inner_exp = exp[start_index + 5:i]
+                            replaced_inner_exp = replace_all_sqrt(inner_exp)
+                            exp = exp[:start_index] + f'sqrt{{{replaced_inner_exp}}}' + exp[i+1:]
+                            break
+                        else:
+                            open_paren -= 1
+            return exp
+        
+        return replace_balanced_sqrt(exp)
     
     def get_digit_display(self):
         out = self.digit_display        

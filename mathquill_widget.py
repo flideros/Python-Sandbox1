@@ -58,9 +58,10 @@ class MathQuillWidget(QWidget):
         
         self.web_page = CustomWebEnginePage(self)
         self.web_view.setPage(self.web_page)
-        self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.web_view.setFixedHeight(64)  # Initial and minimum height
-        self.web_view.setMinimumHeight(50)  # Set minimum height to 60 pixels
+        # Set size policy to expanding for both directions
+        self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.web_view.setFixedHeight(60)  # Initial and minimum height
+        self.web_view.setMinimumHeight(60)  # Set minimum height to 50 pixels
 
         layout.addWidget(self.web_view, 0, Qt.AlignmentFlag.AlignBottom)
         
@@ -130,7 +131,7 @@ class MathQuillWidget(QWidget):
         self.parsed_label.setVisible(visible)
 
     def adjust_web_view_height(self, height):
-        self.web_view.setFixedHeight(max(height, 50))  # Ensure the height doesn't go below 50 pixels
+        self.web_view.setFixedHeight((height, 60))  # Ensure the height doesn't go below 50 pixels
 
     @pyqtSlot(str)
     def update_result_content(self, result):
