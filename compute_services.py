@@ -195,8 +195,8 @@ class ComputeServices:
             result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
             result = re.sub(r'(\d+)/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
             result = re.sub(r'(\((.*)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
-            result = re.sub(r'(\((.*)\))/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
+            result = re.sub(r'(\((.*?)\))/(\((.*?)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
+            #result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
                         
             # Handle mixed numbers
             if 'sqrt' not in result and 'I' not in result:

@@ -69,7 +69,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         expression_tree = Compound([value]),
                                         memory = " ")
         
-        elif input == CalculatorInput.MEMORYRECALL:
+        elif input == CalculatorInput.MEMORYRECALL:            
             print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
             digits = "(sqrt(5) + 113/16)**(-1/4) + 9*(sqrt(5) + 113/16)**(1/4)" #services.get_digit_display()
             value = Value(value=digits)            
@@ -309,15 +309,18 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         memory = state_data.memory,
                                         stack = state_data.stack)
         
-        elif input == CalculatorInput.MEMORYRECALL:
-            print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
-            memory = services.add_parentheses_if_needed(state_data.memory)
-            value = Value(value=memory,result=True)            
-            state_data.expression_tree.expressions.append(value)
-            return NumberInputStateData(current_value = memory,
-                                        expression_tree = state_data.expression_tree,
-                                        memory = state_data.memory,
-                                        stack = state_data.stack)
+        elif input == CalculatorInput.MEMORYRECALL:            
+            if state_data.memory == " ":
+                return state_data
+            else:            
+                print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
+                memory = services.add_parentheses_if_needed(state_data.memory)
+                value = Value(value=memory,result=True)            
+                state_data.expression_tree.expressions.append(value)
+                return NumberInputStateData(current_value = memory,
+                                            expression_tree = state_data.expression_tree,
+                                            memory = state_data.memory,
+                                            stack = state_data.stack)
         
         elif input == CalculatorInput.PARENOPEN:
             print("Parenthesis Open Input - Transition to ParenthesisOpenState")
@@ -444,15 +447,18 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         memory = state_data.memory,
                                         stack = state_data.stack)
         
-        elif input == CalculatorInput.MEMORYRECALL:
-            print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
-            memory = services.add_parentheses_if_needed(state_data.memory)
-            value = Value(value=memory,result=True)            
-            state_data.expression_tree.expressions.append(value)
-            return NumberInputStateData(current_value = memory,
-                                        expression_tree = state_data.expression_tree,
-                                        memory = state_data.memory,
-                                        stack = state_data.stack)
+        elif input == CalculatorInput.MEMORYRECALL:            
+            if state_data.memory == " ":
+                return state_data
+            else:
+                print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
+                memory = services.add_parentheses_if_needed(state_data.memory)
+                value = Value(value=memory,result=True)            
+                state_data.expression_tree.expressions.append(value)
+                return NumberInputStateData(current_value = memory,
+                                            expression_tree = state_data.expression_tree,
+                                            memory = state_data.memory,
+                                            stack = state_data.stack)
         
         elif input == CalculatorInput.PARENOPEN:
             print("Parenthesis Open Input - Stay in ParenthesisOpenState")
@@ -595,15 +601,18 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             memory = state_data.memory,
                                             stack = state_data.stack)
         
-        elif input == CalculatorInput.MEMORYRECALL:
-            print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
-            memory = services.add_parentheses_if_needed(state_data.memory)
-            value = Value(value=memory,result=True)            
-            state_data.expression_tree.expressions.append(value)
-            return NumberInputStateData(current_value = memory,
-                                        expression_tree = state_data.expression_tree,
-                                        memory = state_data.memory,
-                                        stack = state_data.stack)
+        elif input == CalculatorInput.MEMORYRECALL:            
+            if state_data.memory == " ":
+                return state_data
+            else:
+                print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
+                memory = services.add_parentheses_if_needed(state_data.memory)
+                value = Value(value=memory,result=True)            
+                state_data.expression_tree.expressions.append(value)
+                return NumberInputStateData(current_value = memory,
+                                            expression_tree = state_data.expression_tree,
+                                            memory = state_data.memory,
+                                            stack = state_data.stack)
         
         return state_data  # Return the current state if no condition matches
     
@@ -661,12 +670,15 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                         memory = state_data.memory)
         
         elif input == CalculatorInput.MEMORYRECALL:
-            print(f"Memory recall {state_data.memory} - Transition to NumberInputState")            
-            memory = services.add_parentheses_if_needed(state_data.memory)
-            value = Value(value=memory,result=True)            
-            return NumberInputStateData(current_value = memory,
-                                        expression_tree = Compound([value]),
-                                        memory = state_data.memory)
+            if state_data.memory == " ":
+                return state_data
+            else:
+                print(f"Memory recall {state_data.memory} - Transition to NumberInputState")            
+                memory = services.add_parentheses_if_needed(state_data.memory)
+                value = Value(value=memory,result=True)            
+                return NumberInputStateData(current_value = memory,
+                                            expression_tree = Compound([value]),
+                                            memory = state_data.memory)
         
         elif input == CalculatorInput.PARENOPEN:
             print("Parenthesis Open Input - Transition to ParenthesisOpenState")
