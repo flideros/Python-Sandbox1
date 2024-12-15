@@ -235,7 +235,7 @@ class CalculatorServices:
         """
         services = CalculatorServices()
         return {
-            "accumulate_non_zero_digit": services.accumulate_non_zero_digit(10),
+            "accumulate_non_zero_digit": services.accumulate_non_zero_digit(15),
             "accumulate_zero": services.accumulate_zero(15),
             "accumulate_separator": services.accumulate_separator(15),
             "do_math_operation": services.do_math_operation,

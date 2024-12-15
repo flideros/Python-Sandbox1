@@ -662,7 +662,6 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         elif input == CalculatorInput.MEMORYRECALL:
             print(f"Memory recall {state_data.memory} - Transition to NumberInputState")            
-            
             memory = services.add_parentheses_if_needed(state_data.memory)
             value = Value(value=memory,result=True)            
             return NumberInputStateData(current_value = memory,

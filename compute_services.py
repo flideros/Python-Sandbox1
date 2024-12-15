@@ -78,8 +78,7 @@ class ComputeServices:
         self.digit_display = display
     
     def add_parentheses_if_needed(self, text):
-        # Check if the string contains a plus or minus sign
-        if re.search(r'[+-/*]', text):
+        if re.search(r'[/*+-]', text):
             # Add parentheses around the string
             text = f'({text})'
         return text
@@ -100,10 +99,6 @@ class ComputeServices:
         
         # Find fully balanced parentheses and replace
         def replace_balanced_sqrt(exp):
-            if len(exp) >= 5:
-                if exp[-5:] == 'sqrt(' or exp[-2:] in ['+)']:
-                    return exp
-                
             while True:
                 start_index = exp.find('sqrt(')
                 if start_index == -1:
@@ -200,6 +195,7 @@ class ComputeServices:
             result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
             result = re.sub(r'(\d+)/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
             result = re.sub(r'(\((.*)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
+            result = re.sub(r'(\((.*)\))/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
             result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
                         
             # Handle mixed numbers
