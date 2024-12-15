@@ -101,8 +101,9 @@ class ComputeServices:
         # Find fully balanced parentheses and replace
         def replace_balanced_sqrt(exp):
             if len(exp) >= 5:
-                if exp[-5:] == 'sqrt(':
+                if exp[-5:] == 'sqrt(' or exp[-2:] in ['+)']:
                     return exp
+                
             while True:
                 start_index = exp.find('sqrt(')
                 if start_index == -1:
@@ -244,7 +245,7 @@ class ComputeServices:
         Returns the display strings based on the current state of the computation.
         """
         def format_(exp:str) -> str:            
-            exp = self.replace_sqrt(exp)            
+            #exp = self.replace_sqrt(exp)            
             # Handle '**' by replacing it with '^{}
             exp = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', exp)            
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
@@ -258,10 +259,10 @@ class ComputeServices:
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression#[:-len(calculator_state.stack)]
+                    expression_out = self.replace_sqrt(expression) #[:-len(calculator_state.stack)]
                 else:
                     expression = evaluate_expression(calculator_state.expression_tree)
-                    expression_out = expression
+                    expression_out = self.replace_sqrt(expression)
                 ex = self.preprocess_expression(expression)
                 result = self.get_mixed_number(ex)                
                 print(expression_out)
