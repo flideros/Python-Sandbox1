@@ -21,8 +21,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            scrollbar-width: none;
-            overflow: auto;  /* Prevent scrollbars */
+            
         }
         .container {
             display: flex;
@@ -51,29 +50,33 @@
             border-width: 2px;  
         }
         #result {
-            padding: 3px;
+            padding: 20px 3px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
-            justify-content: flex-end; 
+            justify-content: center; 
             background: #fff; 
             white-space: nowrap; 
+            overflow: visible; /* Ensure overflow content is visible */
         }
         #result-value { 
             font-size: 16px;
             color: green;
             padding: 5px;
+            max-height: none; /* Set max-height */
+            max-width: none;
+            overflow: visible; /* Ensure overflow content is visible */
+            text-align: center; /* Center text */
         }
         #latex-output {
             display: none;
         }
         .result-box { 
             display: inline-block; 
-            padding: 2px 2px; 
+            padding: 3px 3px; 
             background-color: #d9f2e6; 
-            border: 2px 
-            solid #5cb85c;
-            border-radius: 2px; 
+            border: 2px solid #5cb85c;
+            border-radius: 2px;
         }
     </style>
     <!-- MathJax Configuration --> 
@@ -141,8 +144,16 @@
             // Function to update the result with LaTeX and render it 
             window.updateResultWithLatex = function(latex) { 
                 var resultElement = document.getElementById('result-value'); 
-                resultElement.textContent = `$$${latex}$$`; 
-                MathJax.typesetPromise([resultElement]); // Render LaTeX
+                resultElement.innerHTML = `$$${latex}$$`; 
+                MathJax.typesetPromise([resultElement]).then(() => { 
+                    resultElement.style.display = 'flex'; 
+                    resultElement.style.flexDirection = 'column'; 
+                    resultElement.style.alignItems = 'center'; 
+                    var resultRect = resultElement.getBoundingClientRect(); 
+                    if (resultRect.top < 0) { 
+                        resultElement.style.transform = `translateY(${Math.abs(resultRect.top)}px)`; 
+                    }
+                });
             };
         });
     </script>

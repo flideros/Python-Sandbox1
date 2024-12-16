@@ -77,12 +77,17 @@ class ComputeServices:
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
     
+    def get_digit_display(self):
+        out = self.digit_display        
+        return out
+    
     def add_parentheses_if_needed(self, text):
         if re.search(r'[/*+-]', text):
             # Add parentheses around the string
             text = f'({text})'
+        text = f'({text})' #test
         return text
-    
+            
     def replace_sqrt(self, exp):
         def replace_all_sqrt(exp):
             pattern = re.compile(r'sqrt\(([^()]*)\)')
@@ -97,7 +102,20 @@ class ComputeServices:
                     exp = exp[:start] + f'sqrt{{{inner_exp}}}' + exp[end:]
             return exp
         
-        # Find fully balanced parentheses and replace
+        def find_balanced_parentheses(s, start_index):
+            stack = []
+            end_index = start_index
+            for index in range(start_index, len(s)):
+                if s[index] == '(':
+                    stack.append(index)
+                elif s[index] == ')':
+                    if stack:
+                        stack.pop()
+                    if not stack:
+                        end_index = index + 1
+                        break
+            return s[start_index:end_index], end_index
+
         def replace_balanced_sqrt(exp):
             while True:
                 start_index = exp.find('sqrt(')
@@ -119,9 +137,20 @@ class ComputeServices:
         
         return replace_balanced_sqrt(exp)
     
-    def get_digit_display(self):
-        out = self.digit_display        
-        return out
+    def replace_power(self, exp):
+        def replace_recursive(exp):
+            pattern_nested = re.compile(r'(\S+)\*\*\((.*?)\)')
+            while pattern_nested.search(exp):
+                exp = pattern_nested.sub(lambda match: f'{match.group(1)}^{{{replace_recursive(match.group(2))}}}', exp)
+            return exp
+        
+        # Handle basic powers like `x**2`
+        exp = re.sub(r'(\S+)\*\*(\d+)', r'\1^{{{\2}}}', exp)        
+        # Handle nested exponents recursively
+        exp = replace_recursive(exp)        
+        # Final pass to handle any remaining cases
+        exp = re.sub(r'(\S+)\*\*\(([^)]+)\)', r'\1^{{{\2}}}', exp)        
+        return exp
     
     def preprocess_expression(self,expression:str) -> str:
         # Function to replace the matched pattern with the captured number
@@ -162,10 +191,6 @@ class ComputeServices:
     def simplify_expression(self, expression):
         exp = self.preprocess_expression(expression)
         return sp.sympify(exp)
-
-    def add_backslashes(self,exp):
-        exp = re.sub(r'(?<!\\)sqrt', r'\\\\sqrt', exp)       
-        return exp
     
     def get_mixed_number(self, expression: str):
         try:
@@ -173,33 +198,11 @@ class ComputeServices:
             exp = sp.sympify(expression)
             print("Sympified expression:", exp)
             
-            # Convert the expression to a string to replace sqrt and fractions
-            result = str(exp)            
-            # Function to convert fraction to mixed number
-            def to_mixed_fraction(match):
-                numerator = int(match.group(1))
-                denominator = int(match.group(2))
-                integer = numerator // denominator
-                remainder = numerator % denominator
-                if integer != 0 and remainder != 0:
-                    return f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
-                elif integer != 0:
-                    return f"{integer}"
-                else: return f"\\\\frac{{{numerator}}}{{{denominator}}}"
+            # Convert the SymPy expression to LaTeX with double backslashes for keywords
+            result = sp.latex(exp, mode='equation').replace('\\', '\\\\')
             
-            # Handle square root expressions: sqrt(anything)
-            result = self.replace_sqrt(result)
-            # Handle '**' by replacing it with '^{}
-            result = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', result)             
-            # Replace '/' with '\frac{{{}}}' in the entire result
-            result = re.sub(r'(\d+)/(\d+)', to_mixed_fraction, result)
-            result = re.sub(r'(\d+)/(\((.*)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            result = re.sub(r'(\((.*)\))/(\d+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                          
-            result = re.sub(r'(\((.*?)\))/(\((.*?)\))', r'\\\\frac{{{\1}}}{{{\2}}}', result)
-            #result = re.sub(r'([^/]+)/([^/]+)', r'\\\\frac{{{\1}}}{{{\2}}}', result)                        
-                        
             # Handle mixed numbers
-            if 'sqrt' not in result and 'I' not in result:
+            if 'sqrt' not in result and 'I' not in result:                
                 try:
                     fraction = sp.Rational(exp)
                     abs_numerator = abs(fraction.numerator)
@@ -223,7 +226,7 @@ class ComputeServices:
                         result = f"{integer} \\\\frac{{{remainder}}}{{{denominator}}}"
                 except Exception as e:
                     result = result
-            
+                    
             # Return a decimal number if a decimal seperator is present.
             if '.' in (str(exp)):
                 result = str(exp.evalf(10)).rstrip('0').rstrip('.')
@@ -232,18 +235,15 @@ class ComputeServices:
             print(f"----error: {e} ")
             result = " "  # or str(e)
         
-        result = self.add_backslashes(result)
         return result
-
     
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
         """
-        def format_(exp:str) -> str:            
-            #exp = self.replace_sqrt(exp)            
+        def format_(exp:str) -> str:                   
             # Handle '**' by replacing it with '^{}
-            exp = re.sub(r'(.*?)\*\*\(([^)]+)\)', r'\1^{{{\(\2\)}}}', exp)            
+            exp = self.replace_power(exp)            
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
             return exp 
         

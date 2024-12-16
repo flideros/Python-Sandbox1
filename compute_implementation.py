@@ -71,11 +71,11 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         elif input == CalculatorInput.MEMORYRECALL:            
             print(f"Memory recall {state_data.memory} - Transition to NumberInputState")
-            digits = "(sqrt(5) + 113/16)**(-1/4) + 9*(sqrt(5) + 113/16)**(1/4)" #services.get_digit_display()
+            digits = "((sqrt(5) + 113/16)**(-1/4) + 9*(sqrt(5) + 113/16)**(1/4))" #services.get_digit_display()
             value = Value(value=digits)            
             return NumberInputStateData(current_value = digits,
                                         expression_tree = Compound([value]),
-                                        memory = "(sqrt(5) + 113/16)**(-1/4) + 9*(sqrt(5) + 113/16)**(1/4)") # test data
+                                        memory = "((sqrt(5) + 113/16)**(-1/4) + 9*(sqrt(5) + 113/16)**(1/4))") # test data
         
         elif input == CalculatorInput.PARENOPEN:
             print("Parenthesis Open Input - Transition to ParenthesisOpenState")
