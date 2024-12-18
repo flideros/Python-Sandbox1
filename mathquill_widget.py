@@ -17,6 +17,10 @@ class Bridge(QObject):
         super().__init__(parent)
 
     @pyqtSlot(str)
+    def print_message(self, message):
+        print(f"Received message from JS: {message}")
+    
+    @pyqtSlot(str)
     def latexUpdated(self, latex):
         self.parent().update_latex_output(latex)
 
@@ -60,8 +64,8 @@ class MathQuillWidget(QWidget):
         self.web_view.setPage(self.web_page)
         # Set size policy to expanding for both directions
         self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.web_view.setFixedHeight(60)  # Initial and minimum height
-        self.web_view.setMinimumHeight(60)  # Set minimum height to 50 pixels
+        self.web_view.setFixedHeight(65)  # Initial and minimum height
+        self.web_view.setMinimumHeight(65)  # Set minimum height to 50 pixels
 
         layout.addWidget(self.web_view, 0, Qt.AlignmentFlag.AlignBottom)
         

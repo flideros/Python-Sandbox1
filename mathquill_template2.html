@@ -21,28 +21,27 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            
         }
         .container {
             display: flex;
             width: 100%;
-            justify-content: space-between;  /* Space between input and result */
+            justify-content: space-between; 
             align-items: center;
             padding: 0 0px;
         }
         .scroll-container { 
             overflow: auto; 
-            height: 100%; /* Adjust as needed */ 
-            width: 100%; /* Adjust as needed */ 
+            height: 100%; 
+            width: 100%; 
         }
         #mathquill-input {
             flex-grow: 1;
-            height: 60px; /* Fixed height */
-            border: 2px solid #ccc;  /* Divider */
+            height: 60px; 
+            border: 2px solid #ccc;  
             display: flex;
             align-items: center;
             justify-content: flex-end; 
-            padding: 2px;
+            padding: 5px;
             overflow-y: auto; 
         }
         #mathquill-input:focus {
@@ -50,23 +49,24 @@
             border-width: 2px;  
         }
         #result {
-            padding: 20px 3px;
+            padding: 0px 5px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center; 
             background: #fff; 
             white-space: nowrap; 
-            overflow: visible; /* Ensure overflow content is visible */
+            overflow: visible; 
+            line-height: 1.0; /* Adjusting line height */
         }
         #result-value { 
             font-size: 16px;
             color: green;
-            padding: 5px;
-            max-height: none; /* Set max-height */
+            padding: 10px;
+            max-height: none; 
             max-width: none;
-            overflow: visible; /* Ensure overflow content is visible */
-            text-align: center; /* Center text */
+            overflow: visible; 
+            text-align: center; 
         }
         #latex-output {
             display: none;
@@ -84,14 +84,35 @@
         window.MathJax = { 
             tex: { 
                 inlineMath: [['$', '$'], ['\\(', '\\)']], 
-                displayMath: [['$$', '$$'], ['\ \[', '\\] ']] }, 
-                svg: { fontCache: 'global' } }; 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] }, 
+            svg: { fontCache: 'global' } };,
+            options: {
+                renderActions: {
+                    zoom: [10, function (doc) {
+                        MathJax.startup.document.clear();
+                        MathJax.startup.document.updateDocument();
+                        MathJax.startup.document.renderDoc();
+                    }, '']
+                }
+            },
+            loader: {load: ['ui/zoom']},
+            tex2jax: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            },
+            startup: {
+                ready() {
+                    MathJax.startup.defaultReady();
+                    console.log('MathJax is ready, version', MathJax.version);
+                }
+            }
+        };
     </script>
     <script src="qwebchannel.js"></script> 
     <script src="resources/jquery-3.6.0.min.js"></script>
     <script src="resources/mathquill.min.js"></script>
     <script src="resources/qwebchannel.js"></script>
-    <script src="resources/MathJax/es5/tex-mml-chtml.js"></script>
+    <script src="resources/MathJax/es5/tex-mml-svg.js"></script>
     <script type="text/javascript"> 
         function initializeBridge() { 
             new QWebChannel(qt.webChannelTransport, function(channel) { 
@@ -104,11 +125,16 @@
     </script>
 </head>
 <body onload="initializeBridge()">
-    <div class="container">
-        <div id="mathquill-input" class="mathquill-editable"></div>
-        <div id="result">result: <span id="result-value"></span></div>
+    <div class="container">        
+        <div id="mathquill-input" class="mathquill-editable"></div>        
+        <div id="result"><br>
+            result:  <div style="padding-left: 10px;"><br><span id="result-value"></span></div> 
+        </div>
     </div>
-    <div id="latex-output">LaTeX Output: <span id="latex"></span></div>
+    <div id="latex-output">             
+        LaTeX Output: 
+        <span id="latex"></span>
+    </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -137,24 +163,27 @@
             };
             
             // Function to insert a result box into MathQuill 
-            window.insertResultBox = function(result) { 
+            window.insertResultBox = function(result) {
                 var resultLatex = `\\class{result-box}{\\text{${result}}}`; 
                 mathField.write(resultLatex); 
             };
             // Function to update the result with LaTeX and render it 
-            window.updateResultWithLatex = function(latex) { 
+            window.updateResultWithLatex = function(latex) {
                 var resultElement = document.getElementById('result-value'); 
-                resultElement.innerHTML = `$$${latex}$$`; 
+                // Update the result element with LaTeX
+                resultElement.innerHTML = `$$${latex}$$`;
                 MathJax.typesetPromise([resultElement]).then(() => { 
-                    resultElement.style.display = 'flex'; 
-                    resultElement.style.flexDirection = 'column'; 
-                    resultElement.style.alignItems = 'center'; 
-                    var resultRect = resultElement.getBoundingClientRect(); 
-                    if (resultRect.top < 0) { 
-                        resultElement.style.transform = `translateY(${Math.abs(resultRect.top)}px)`; 
-                    }
-                });
+                });            
             };
+            // Slow down the scroll speed
+            let scrollSpeed = 0.20;  // Adjust this value for slower or faster scrolling
+
+            window.addEventListener('wheel', function(event) {
+                event.preventDefault();  // Prevent the default scroll behavior
+                var delta = event.deltaY * scrollSpeed;  // Apply the scroll speed factor
+                document.documentElement.scrollTop += delta;
+                document.body.scrollTop += delta;  // For Safari compatibility
+            }, { passive: false });
         });
     </script>
 </body>
