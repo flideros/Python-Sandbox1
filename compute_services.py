@@ -169,6 +169,7 @@ class ComputeServices:
         pattern7 = r'(\))(\()' # Group 1: close parenthesis, Group 2: open parenthesis
         pattern8 = r'(\d)(sqrt)' # Group 1: digit, Group 2: 'sqrt'
         pattern9 = r'(\))(sqrt)' # Between close parenthesis and sqrt
+        pattern10 =r'(\d)\.(\D)' # Group 1: digit, Group 2: non-digit (assume implicitly decimal number)
         
         patternA = r'\1*\2' # Insert multiplication
         # Process expression with patterns 
@@ -180,7 +181,9 @@ class ComputeServices:
         processed_expression = re.sub(pattern6, patternA, processed_expression)
         processed_expression = re.sub(pattern7, patternA, processed_expression)
         processed_expression = re.sub(pattern8, patternA, processed_expression)
-        processed_expression = re.sub(pattern9, patternA, processed_expression)        
+        processed_expression = re.sub(pattern9, patternA, processed_expression)
+        processed_expression = re.sub(pattern10, patternA, processed_expression)
+        
         return processed_expression
     
     def get_decimal_value(self, expression):

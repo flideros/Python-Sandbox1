@@ -185,7 +185,7 @@ class MathQuillWidget(QWidget):
     def update_result_content(self, result):
         self.result_latex = result
         script = f"""
-        document.getElementById('result-value').innerHTML =  `{result}`;
+        document.getElementById('result-value').innerHTML ='$$' + `{result}` + '$$';
         MathJax.typesetPromise([document.getElementById('result-value')]);
         """
         self.web_view.page().runJavaScript(script)

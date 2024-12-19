@@ -159,7 +159,7 @@
             window.updateResultWithLatex = function(latex) {
                 var resultElement = document.getElementById('result-value'); 
                 // Update the result element with LaTeX
-                resultElement.innerHTML = `$$${latex}$$`;                
+                resultElement.innerHTML = `$${latex}$$`;                
                 MathJax.typesetPromise([resultElement]).then(() => { 
                 });            
             };
