@@ -62,7 +62,7 @@
         #result-value { 
             font-size: 16px;
             color: green;
-            padding: 10px;
+            padding: 5px;
             max-height: none; 
             max-width: none;
             overflow: visible; 
@@ -84,22 +84,9 @@
         window.MathJax = { 
             tex: { 
                 inlineMath: [['$', '$'], ['\\(', '\\)']], 
-                displayMath: [['$$', '$$'], ['\\[', '\\]']] }, 
-            svg: { fontCache: 'global' } };,
-            options: {
-                renderActions: {
-                    zoom: [10, function (doc) {
-                        MathJax.startup.document.clear();
-                        MathJax.startup.document.updateDocument();
-                        MathJax.startup.document.renderDoc();
-                    }, '']
-                }
-            },
-            loader: {load: ['ui/zoom']},
-            tex2jax: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            },
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            }, 
+            svg: { fontCache: 'global' },
             startup: {
                 ready() {
                     MathJax.startup.defaultReady();
@@ -112,7 +99,7 @@
     <script src="resources/jquery-3.6.0.min.js"></script>
     <script src="resources/mathquill.min.js"></script>
     <script src="resources/qwebchannel.js"></script>
-    <script src="resources/MathJax/es5/tex-mml-svg.js"></script>
+    <script src="resources/MathJax/es5/tex-mml-chtml.js"></script>
     <script type="text/javascript"> 
         function initializeBridge() { 
             new QWebChannel(qt.webChannelTransport, function(channel) { 
@@ -136,7 +123,7 @@
         <span id="latex"></span>
     </div>
     
-    <script>
+    <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
             var MQ = MathQuill.getInterface(2);
             var mathField = MQ.MathField(document.getElementById('mathquill-input'), {
@@ -167,11 +154,12 @@
                 var resultLatex = `\\class{result-box}{\\text{${result}}}`; 
                 mathField.write(resultLatex); 
             };
+            
             // Function to update the result with LaTeX and render it 
             window.updateResultWithLatex = function(latex) {
                 var resultElement = document.getElementById('result-value'); 
                 // Update the result element with LaTeX
-                resultElement.innerHTML = `$$${latex}$$`;
+                resultElement.innerHTML = `$$${latex}$$`;                
                 MathJax.typesetPromise([resultElement]).then(() => { 
                 });            
             };
@@ -184,6 +172,14 @@
                 document.documentElement.scrollTop += delta;
                 document.body.scrollTop += delta;  // For Safari compatibility
             }, { passive: false });
+            
+            var resultValue = document.getElementById('result-value');
+            resultValue.addEventListener('click', function() {
+                // Communication bridge to the PyQt app
+                if (window.bridge) {
+                    window.bridge.openMathJaxWindow();
+                }
+            });
         });
     </script>
 </body>

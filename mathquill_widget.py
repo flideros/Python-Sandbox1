@@ -1,9 +1,46 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QFrame, QSizePolicy, QSpacerItem
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QLabel, QFrame, QSizePolicy, QSpacerItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEnginePage
+from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtCore import QUrl, QDir, pyqtSlot, pyqtSignal, QObject, Qt, QEvent
+
+class MathJaxWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('MathJax Pop-Out Window')
+        self.setGeometry(500, 300, 500, 300) 
+        
+        self.web_view = QWebEngineView(self)
+        self.web_page = CustomWebEnginePage(self)
+        self.web_view.setPage(self.web_page)
+        
+        html_file_path = QDir.current().absoluteFilePath("mathjax_pop-out.html")
+        self.web_view.load(QUrl.fromLocalFile(html_file_path))
+        
+        self.setCentralWidget(self.web_view)
+        
+        # Setup QWebChannel
+        self.bridge = self
+        self.channel = QWebChannel()
+        self.channel.registerObject("bridge", self.bridge)
+        self.web_view.page().loadFinished.connect(self.inject_script)
+    
+        self.latex_content = ""
+        
+    def load_mathjax_content(self, latex_content):
+        # load latex content to self                
+        self.latex_content = latex_content
+        print(f"load_math_content:{latex_content}")
+
+    def inject_script(self):
+        latex_content = self.latex_content
+        script = f"""
+        document.getElementById('math-content').innerHTML = '$$' + `{latex_content}` + '$$';
+        MathJax.typesetPromise([document.getElementById('math-content')]);
+        """
+        print("script injected")
+        self.web_view.page().runJavaScript(script)
 
 '''
 Bridge Class: This class allows the Python side to receive updates from the
@@ -15,6 +52,7 @@ class Bridge(QObject):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.main_window = parent
 
     @pyqtSlot(str)
     def print_message(self, message):
@@ -31,6 +69,11 @@ class Bridge(QObject):
     @pyqtSlot()
     def clickedSignal(self):
         self.clicked.emit()
+        
+    @pyqtSlot()
+    def openMathJaxWindow(self):
+        self.main_window.open_mathjax_window()
+        
 '''
 CustomWebEnginePage Class: This custom class primarily helps to manage communication
 and handle JavaScript console messages. It ensures that any messages or errors from the
@@ -49,10 +92,11 @@ class MathQuillWidget(QWidget):
     clicked = pyqtSignal(int) # Signal to be emitted when the widget is clicked
     
     def __init__(self, widget_id, parent=None):
-        super().__init__(parent)
+        super().__init__(parent)        
         self.widget_id = widget_id
         self.parent_window = parent  # Reference to the main window
         self.id_label = QLabel(f"MathQuill Widget {widget_id}")
+        self.result_latex = ''
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)  # Set margins to 0
@@ -139,12 +183,20 @@ class MathQuillWidget(QWidget):
 
     @pyqtSlot(str)
     def update_result_content(self, result):
+        self.result_latex = result
         script = f"""
-        document.getElementById('result-value').innerHTML = '$$' + `{result}` + '$$';
+        document.getElementById('result-value').innerHTML =  `{result}`;
         MathJax.typesetPromise([document.getElementById('result-value')]);
         """
         self.web_view.page().runJavaScript(script)
-
+    
+    def open_mathjax_window(self):
+       latex_content = self.result_latex       
+       self.mathjax_window = MathJaxWindow()
+       self.mathjax_window.show()
+       self.mathjax_window.load_mathjax_content(latex_content)
+       
+       
 
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QScrollArea, QLabel, QSizePolicy, QSpacerItem
