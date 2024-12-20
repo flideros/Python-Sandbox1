@@ -244,13 +244,14 @@ class FourFunctionCalculator(QWidget):
         
         handle_return_input = self.services.handle_return(self.state)
         
-        if handle_return_input == True and input_text == 'Return':
-            self.resetSignal.emit() # Emit the reset signal
-            self.mathquill_stack_widget.add_mathquill_widget()                        
+        if handle_return_input == True:
+            if input_text == 'Return':
+                self.resetSignal.emit() # Emit the reset signal
+                self.mathquill_stack_widget.add_mathquill_widget()
             
         #output_text, result = self.services.get_display_from_state("Error:")(self.state)
         # Update mathquill output for non-digit input
-        if input_text in ['Minus','Plus','Divide by','Times','(',')','Sqrt']:
+        if input_text in ['Minus','Plus','Divide by','Times','(',')','Sqrt','Power']:
             # Emit the reset signal
             
             output_text, result = self.services.get_display_from_state("Error:")(self.state)

@@ -179,7 +179,7 @@ class MathQuillWidget(QWidget):
         self.parsed_label.setVisible(visible)
 
     def adjust_web_view_height(self, height):
-        self.web_view.setFixedHeight((height, 60))  # Ensure the height doesn't go below 50 pixels
+        self.web_view.setFixedHeight((height, 65))  # Ensure the height doesn't go below 50 pixels
 
     @pyqtSlot(str)
     def update_result_content(self, result):
@@ -194,9 +194,7 @@ class MathQuillWidget(QWidget):
        latex_content = self.result_latex       
        self.mathjax_window = MathJaxWindow()
        self.mathjax_window.show()
-       self.mathjax_window.load_mathjax_content(latex_content)
-       
-       
+       self.mathjax_window.load_mathjax_content(latex_content)       
 
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QScrollArea, QLabel, QSizePolicy, QSpacerItem
@@ -209,7 +207,7 @@ class CustomScrollArea(QScrollArea):
         
     def wheelEvent(self, event):
         visible_height = self.viewport().height()
-        widget_height = 50
+        widget_height = 65
         num_visible_widgets = visible_height // widget_height
 
         if self.widget().layout().count() > num_visible_widgets + 2: 

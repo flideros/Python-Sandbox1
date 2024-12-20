@@ -17,7 +17,9 @@ class ComputeServices:
     def handle_return(self,state) -> bool:
         def inner(state) -> bool:            
             if isinstance(state, ResultStateData):
-                return True            
+                return True
+            if isinstance(state, FunctionInputStateData):
+                return True
             else:
                 return False
         return inner(state)
@@ -70,9 +72,11 @@ class ComputeServices:
         expr_tree, _ = parse_inner(tokens, 0)
         return expr_tree
     
-    def sqrt_func(self, x: str) -> str:
-        print(f"x: {x}")
-        return '\\\\sqrt({x})'
+    def sqrt_func(self, x: str) -> str:        
+        return(f"sqrt({x})")
+    
+    def power_func(self, x: str) -> str:        
+        return(f"**({x})")
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -196,10 +200,8 @@ class ComputeServices:
         return sp.sympify(exp)
     
     def get_mixed_number(self, expression: str):
-        try:
-            print("Expression received:", expression)
-            exp = sp.sympify(expression)
-            print("Sympified expression:", exp)
+        try:            
+            exp = sp.sympify(expression)           
             
             # Convert the SymPy expression to LaTeX with double backslashes for keywords
             result = sp.latex(exp, mode='equation').replace('\\', '\\\\')
@@ -245,7 +247,7 @@ class ComputeServices:
         Returns the display strings based on the current state of the computation.
         """
         def format_(exp:str) -> str:                   
-            # Handle '**' by replacing it with '^{}
+            # Handle '**' by replacing it with '^{}            
             exp = self.replace_power(exp)            
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
             return exp 
@@ -258,13 +260,12 @@ class ComputeServices:
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = self.replace_sqrt(expression) #[:-len(calculator_state.stack)]
+                    expression_out = self.replace_sqrt(expression) #[:-len(calculator_state.stack)]                    
                 else:
-                    expression = evaluate_expression(calculator_state.expression_tree)
-                    expression_out = self.replace_sqrt(expression)
+                    expression = evaluate_expression(calculator_state.expression_tree)                    
+                    expression_out = self.replace_sqrt(expression)                    
                 ex = self.preprocess_expression(expression)
                 result = self.get_mixed_number(ex)                
-                print(expression_out)
                 return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
             
             elif isinstance(calculator_state, OperatorInputStateData):
@@ -299,8 +300,7 @@ class ComputeServices:
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
                 ex = self.preprocess_expression(expression_out)                
-                result = self.get_mixed_number(ex)
-                print(expression_out)
+                result = self.get_mixed_number(ex)                
                 return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
                 
             elif isinstance(calculator_state, ErrorStateData):

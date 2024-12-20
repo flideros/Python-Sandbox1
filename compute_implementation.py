@@ -49,9 +49,9 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   expression_tree = new_tree,
                                                   memory = " ")
             
-            elif input_type == 'FUNCTION':   
-                print("Function Input {_input_value} - Transition to FunctionInputState")
+            elif input_type == 'FUNCTION':                
                 if _input_value == MathFunction.SQRT:                                    
+                    print("Function Input {_input_value} - Transition to FunctionInputState")
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
                     new_tree = Compound([function])
@@ -82,6 +82,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             new_compound = Compound([])            
             new_tree = Compound([Parenthesis(new_compound)])
             new_stack = [(state_data,new_tree)]
+            print(f"new_inner_expression[:-1] -- (")
             return ParenthesisOpenStateData(inner_expression = "(",                                        
                                             expression_tree = new_compound,
                                             memory = " ",
@@ -166,10 +167,25 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
             
             elif input_type == 'FUNCTION':   
-                print("Function Input {_input_value} - Transition to FunctionInputState")
+                print(f"Function Input {_input_value} - Transition to FunctionInputState")
                 if _input_value == MathFunction.SQRT:                
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
+                    state_data.expression_tree.expressions.append(function)             
+                    if state_data.stack is not None:
+                        state_data.stack.append((state_data,state_data.expression_tree))
+                    else:
+                        state_data.stack = [(state_data,state_data.expression_tree)]
+                    new_current_expression = evaluate_expression(state_data.expression_tree)
+                    
+                    return FunctionInputStateData(current_value = new_current_expression[:-1],                                        
+                                                  expression_tree = new_compound,
+                                                  memory = state_data.memory,
+                                                  stack = state_data.stack)
+                
+                elif _input_value == MathFunction.POWER:                
+                    new_compound = Compound([])            
+                    function = Function(new_compound,services.power_func)
                     state_data.expression_tree.expressions.append(function)             
                     if state_data.stack is not None:
                         state_data.stack.append((state_data,state_data.expression_tree))
@@ -223,6 +239,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]            
             new_inner_expression = evaluate_expression(state_data.expression_tree)
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
@@ -235,6 +252,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             previous_state_data, previous_expression_tree = state_data.stack.pop()                         
             state_data.expression_tree = previous_expression_tree            
             new_inner_expression = evaluate_expression(state_data.expression_tree)
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = state_data.expression_tree,
                                             memory = state_data.memory,
@@ -331,6 +349,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]
             new_inner_expression = evaluate_expression(state_data.expression_tree)
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                    
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
@@ -436,6 +455,24 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   expression_tree = new_compound,
                                                   memory = state_data.memory,
                                                   stack = state_data.stack)
+                
+                if _input_value == MathFunction.POWER:
+                    if state_data.inner_expression[-1] == ')':
+                        new_compound = Compound([])            
+                        function = Function(new_compound,services.power_func)
+                        state_data.expression_tree.expressions.append(function)             
+                        if state_data.stack is not None:
+                            state_data.stack.append((state_data,state_data.expression_tree))
+                        else:
+                            state_data.stack = [(state_data,state_data.expression_tree)]
+                        new_current_expression = evaluate_expression(state_data.expression_tree)
+                        
+                        return FunctionInputStateData(current_value = new_current_expression[:-1],                                        
+                                                      expression_tree = new_compound,
+                                                      memory = state_data.memory,
+                                                      stack = state_data.stack)
+                    else:
+                        return state_data
         
         elif input == CalculatorInput.DECIMALSEPARATOR:
             print("Decimal Seperator Input - Transition to NumberInputState")
@@ -469,6 +506,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]
             new_inner_expression = evaluate_expression(state_data.expression_tree)
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = new_inner_expression[:-1],                                       
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
@@ -477,11 +515,13 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         elif input == CalculatorInput.PARENCLOSE:
             print("Parenthesis Close Input - Stay in ParenthesisOpenState") # ToDo: consider changing this to Parenthesis State
             if len(state_data.stack) == 0:
+                print(f"inner_expression[:-1] -- {state_data.inner_expression}")
                 return state_data
             previous_state_data, previous_expression_tree = state_data.stack.pop()            
             if len(state_data.inner_expression) == 1 and state_data.inner_expression[-1] != "(":                
                 state_data.expression_tree = previous_expression_tree            
                 new_inner_expression = evaluate_expression(state_data.expression_tree)                
+                print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
                 return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                                 expression_tree = state_data.expression_tree,
                                                 memory = state_data.memory,
@@ -489,6 +529,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             if len(state_data.inner_expression) > 1 and state_data.inner_expression[-2:] != "()":                
                 state_data.expression_tree = previous_expression_tree            
                 new_inner_expression = evaluate_expression(state_data.expression_tree)                
+                print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
                 return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                                 expression_tree = state_data.expression_tree,
                                                 memory = state_data.memory,
@@ -496,6 +537,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             else:
                 state_data.stack.append((previous_state_data, previous_expression_tree))
                 new_inner_expression = evaluate_expression(state_data.expression_tree)
+                print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
                 return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                                 expression_tree = state_data.expression_tree,
                                                 memory = state_data.memory,
@@ -525,7 +567,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         if input == CalculatorInput.ZERO:
             print("Zero Input - Transition to NumberInputState")
-            digits = services.get_digit_display()
+            digits = str(input_value) #services.get_digit_display()            
             value = Value(value=digits)
             state_data.expression_tree.expressions.append(value)
             return NumberInputStateData(current_value = digits,
@@ -539,7 +581,8 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
             if input_type == 'DIGIT' and input_value in range(1, 10):
                 print(f"Digit Input {input_value} - Transition to NumberInputState")
-                digits = services.get_digit_display()
+                digits = str(input_value) #services.get_digit_display()
+                print(f"Input digits: {digits}")
                 value = Value(value=digits)
                 state_data.expression_tree.expressions.append(value)
                 return NumberInputStateData(current_value = digits,
@@ -596,6 +639,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             else:
                 state_data.stack = [(state_data,state_data.expression_tree)]
             new_inner_expression = evaluate_expression(state_data.expression_tree)
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = new_inner_expression[:-1],                                       
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
@@ -685,6 +729,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             new_compound = Compound([])            
             new_tree = Compound([Parenthesis(new_compound)])
             new_stack = [(state_data,new_tree)]
+            print(f"new_inner_expression[:-1] -- {new_inner_expression[:-1]}")
             return ParenthesisOpenStateData(inner_expression = "(",                                        
                                             expression_tree = new_compound,
                                             memory = state_data.memory,
