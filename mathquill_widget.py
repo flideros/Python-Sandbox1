@@ -148,14 +148,23 @@ class MathQuillWidget(QWidget):
         
         # Connect the clicked signal from the bridge to the widget's clicked signal
         self.web_page.bridge.clicked.connect(self.handle_click)
+    
+    def set_cursor_position(self):
+        # Execute JavaScript to set cursor position in MathQuill
+        self.web_view.page().runJavaScript("window.mathField.focus(); window.mathField.__controller.cursor.insAtRightEnd(window.mathField.__controller.root);")        
+        # JavaScript to check the current expression and set the cursor position
+        js_code = """ (function() { window.mathField.focus(); window.mathField.__controller.cursor.insAtRightEnd(window.mathField.__controller.root); const latex = window.mathField.latex(); console.log("Current LaTeX:", latex); const openPowerRegex = /\\^\\{[^\\}]*$/; if (openPowerRegex.test(latex)) { const cursor = window.mathField.__controller.cursor; cursor.insLeftOf(cursor.parent.rightEndChild); console.log("Cursor set inside incomplete power expression"); } })(); """
+        self.web_view.page().runJavaScript(js_code)
         
     def handle_click(self): self.clicked.emit(self.widget_id)
     
     def update_latex_output(self, latex):
         self.latex_label.setText(f"LaTeX Output: {latex}")
         self.parsed_label.setText(f"Parsed LaTeX: {self.parse_latex(latex)}")
+        self.set_cursor_position()
         if self.parent_window:
             self.parent_window.update_main_text_input(latex)
+            
 
     def parse_latex(self, latex):
         parsed_latex = latex.replace('\\frac', '/').replace('{', '').replace('}', '')

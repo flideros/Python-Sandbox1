@@ -122,7 +122,6 @@
         LaTeX Output: 
         <span id="latex"></span>
     </div>
-    
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
             var MQ = MathQuill.getInterface(2);
@@ -139,6 +138,8 @@
                 }
             });
 
+            window.mathField = mathField;
+
             // Setup QWebChannel communication
             new QWebChannel(qt.webChannelTransport, function(channel) {
                 window.bridge = channel.objects.bridge;
@@ -148,13 +149,13 @@
             window.updateMathQuill = function(latex) {
                 mathField.latex(latex);
             };
-            
+
             // Function to insert a result box into MathQuill 
             window.insertResultBox = function(result) {
                 var resultLatex = `\\class{result-box}{\\text{${result}}}`; 
                 mathField.write(resultLatex); 
             };
-            
+
             // Function to update the result with LaTeX and render it 
             window.updateResultWithLatex = function(latex) {
                 var resultElement = document.getElementById('result-value'); 
@@ -163,6 +164,7 @@
                 MathJax.typesetPromise([resultElement]).then(() => { 
                 });            
             };
+
             // Slow down the scroll speed
             let scrollSpeed = 0.20;  // Adjust this value for slower or faster scrolling
 
@@ -172,7 +174,7 @@
                 document.documentElement.scrollTop += delta;
                 document.body.scrollTop += delta;  // For Safari compatibility
             }, { passive: false });
-            
+
             var resultValue = document.getElementById('result-value');
             resultValue.addEventListener('click', function() {
                 // Communication bridge to the PyQt app
@@ -184,3 +186,4 @@
     </script>
 </body>
 </html>
+
