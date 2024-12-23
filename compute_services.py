@@ -73,10 +73,10 @@ class ComputeServices:
         return expr_tree
     
     def sqrt_func(self, x: str) -> str:        
-        return(f"sqrt({x})")
+        return(f"sqrt{x}")
     
     def power_func(self, x: str) -> str:        
-        return(f"**({x})")
+        return(f"**{x}")
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -85,11 +85,10 @@ class ComputeServices:
         out = self.digit_display        
         return out
     
-    def add_parentheses_if_needed(self, text):
+    def add_parentheses_if_needed(self, text): 
         if re.search(r'[/*+-]', text):
             # Add parentheses around the string
             text = f'({text})'
-        text = f'({text})' #test
         return text
             
     def replace_sqrt(self, exp):
@@ -160,6 +159,7 @@ class ComputeServices:
         # Function to replace the matched pattern with the captured number
         def replace_with_number(match):
             return match.group(1)
+        expression = expression.replace('.-','.0-').replace('.+','.0+').replace('.*','.0*').replace('./','.0/')
         # Regular expression to extract the number within the last set of curly braces
         pattern1 = r"\\\\class\{result-box\}\{(-?\d+)\}" # Integer
         pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
@@ -192,12 +192,21 @@ class ComputeServices:
     
     def get_decimal_value(self, expression):
         exp = self.preprocess_expression(expression)
-        expr = sp.sympify(exp)
-        return str(expr.evalf())
-    
+        try:
+            expr = sp.sympify(exp)
+            return str(expr.evalf())
+        except Exception as e:
+            print(f"get_decimal_value----error: {e} ")
+            result = exp  # or str(e)
     def simplify_expression(self, expression):
-        exp = self.preprocess_expression(expression)
-        return sp.sympify(exp)
+        try:
+            exp = self.preprocess_expression(expression)
+            result = sp.sympify(exp)
+        except Exception as e:
+            print(f"simplify_expression----error: {e} ")
+            result = exp  # or str(e)
+        
+        return result
     
     def get_mixed_number(self, expression: str):
         try:            
@@ -234,11 +243,11 @@ class ComputeServices:
                     
             # Return a decimal number if a decimal seperator is present.
             if '.' in (str(exp)):
-                result = str(exp.evalf(10)).rstrip('0').rstrip('.')
+                result = str(exp.evalf(15)).rstrip('0').rstrip('.')
 
         except Exception as e:
-            print(f"----error: {e} ")
-            result = " "  # or str(e)
+            print(f"get_mixed_number----error: {e} ")
+            result = expression  # or str(e)
         
         return result
     
@@ -247,8 +256,10 @@ class ComputeServices:
         Returns the display strings based on the current state of the computation.
         """
         def format_(exp:str) -> str:                   
-            # Handle '**' by replacing it with '^{}            
-            exp = self.replace_power(exp)            
+            # Handle '**' by replacing it with '^{}                       
+            exp = self.replace_power(exp)
+            
+            exp = exp.replace('.-','.0-').replace('.+','.0+').replace('.*','.0*').replace('./','.0/')
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
             return exp 
         
@@ -258,25 +269,27 @@ class ComputeServices:
             
             elif isinstance(calculator_state, NumberInputStateData):                
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)
-                    expression_out = self.replace_sqrt(expression) #[:-len(calculator_state.stack)]                    
-                else:
-                    expression = evaluate_expression(calculator_state.expression_tree)                    
-                    expression_out = self.replace_sqrt(expression)                    
+                    _state, exp = calculator_state.stack[0]                    
+                    expression = evaluate_expression(exp)                                        
+                else:                    
+                    expression = evaluate_expression(calculator_state.expression_tree)                                        
                 ex = self.preprocess_expression(expression)
-                result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
+                expression_out = self.replace_sqrt(expression)
+                result = self.get_mixed_number(ex)
+                result = self.replace_sqrt(result)
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression[:-len(calculator_state.stack)]
+                    expression_out = expression #[:-len(calculator_state.stack)]
+                    expression_out = self.replace_sqrt(expression_out)
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree) 
+                    expression_out = evaluate_expression(calculator_state.expression_tree)
+                    expression_out = self.replace_sqrt(expression_out)
                 result = " "                
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
+                return (format_(expression_out),result)
             
             elif isinstance(calculator_state, ResultStateData):
                 return (" ", None)
@@ -285,23 +298,28 @@ class ComputeServices:
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression[:-len(calculator_state.stack)]
+                    expression_out = expression#[:-len(calculator_state.stack)]                    
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree)
+                    expression_out = evaluate_expression(calculator_state.expression_tree)                    
+                    print(f"Expression Out: {expression_out}")
                 ex = self.preprocess_expression(expression_out)
-                result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
+                result = self.get_mixed_number(ex)
+                result = self.replace_sqrt(result)
+                expression_out = self.replace_sqrt(ex)
+                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression[:-len(calculator_state.stack)]                    
+                    expression_out = expression[:-len(calculator_state.stack)]
+                    #expression_out = self.replace_sqrt(expression_out)
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
+                    #expression_out = self.replace_sqrt(expression_out)
                 ex = self.preprocess_expression(expression_out)                
-                result = self.get_mixed_number(ex)                
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot'))
+                result = " "                
+                return (format_(expression_out),result)
                 
             elif isinstance(calculator_state, ErrorStateData):
                 return (error_msg + calculator_state.math_error.value, None)

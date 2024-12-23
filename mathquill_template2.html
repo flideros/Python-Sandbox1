@@ -134,7 +134,8 @@
                         if (window.bridge) {
                             window.bridge.latexUpdated(latex);
                         }
-                    }
+                    },
+                    enter: function() { submitLatex(latex); }
                 }
             });
 
@@ -182,6 +183,29 @@
                     window.bridge.openMathJaxWindow();
                 }
             });
+            // Function to focus on MathQuill and move cursor left 
+            window.focusAndMoveLeft = function() { 
+                // Focus on the MathQuill field 
+                window.mathField.focus(); 
+                
+                // Simulate a mouse click into the MathQuill field 
+                const clickEvent = new MouseEvent('click', { 
+                    bubbles: true, 
+                    cancelable: true, 
+                    view: window 
+                });                 
+                document.getElementById('mathquill-input').dispatchEvent(clickEvent);
+                
+                // Simulate left arrow key press 
+                const leftArrowEvent = new KeyboardEvent('keydown', { 
+                    bubbles: true, 
+                    cancelable: true, 
+                    key: 'ArrowLeft', 
+                    code: 'ArrowLeft',
+                    keyCode: 37 // Left arrow key code 
+                }); 
+                document.getElementById('mathquill-input').dispatchEvent(leftArrowEvent); 
+            };
         });
     </script>
 </body>

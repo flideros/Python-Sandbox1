@@ -212,7 +212,7 @@ def evaluate_expression(expr: Expression) -> str:
     elif isinstance(expr, Parenthesis):
         return f"({evaluate_expression(expr.expression)})"
     elif isinstance(expr, Function):        
-        return expr.function(f"{evaluate_expression(expr.expression)}")
+        return expr.function(f"({evaluate_expression(expr.expression)})")
     elif isinstance(expr, Compound):
         return "".join(evaluate_expression(e) for e in expr.expressions)
     elif isinstance(expr, Exponentiation):
