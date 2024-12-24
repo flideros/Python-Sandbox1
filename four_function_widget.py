@@ -161,10 +161,10 @@ class FourFunctionCalculator(QWidget):
     # ------Create Functions---------    
     def setup_function_buttons(self, button_style):        
         function_buttons = [
-            ('Divide by', 0, 0), ('(', 0, 1), 
-            ('Times', 1, 0), (')', 1, 1),
-            ('Plus', 2, 0), ('FUNC', 2, 1), 
-            ('Minus', 3, 0), ('Return', 3, 1)
+            ('Plus', 0, 0), ('FUNC', 0, 1), 
+            ('Minus', 1, 0), ('(', 1, 1),
+            ('Times', 2, 0), (')', 2, 1), 
+            ('Divide by', 3, 0), ('Return', 3, 1)
         ]        
         for (text, row, col) in function_buttons:            
             button = QPushButton(text)
@@ -205,7 +205,7 @@ class FourFunctionCalculator(QWidget):
 
     def update_button_text(self, text):
         if text != "Select":
-            button = self.buttons[(2, 1)]
+            button = self.buttons[(0, 1)]
             button.setText(text)
             button.setEnabled(True)  # Enable the button when a function is selected
             button.setToolTip("")  # Remove the tooltip when active

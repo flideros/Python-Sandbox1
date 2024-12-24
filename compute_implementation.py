@@ -562,7 +562,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         
         if input == CalculatorInput.ZERO:
             print("Zero Input - Transition to NumberInputState")
-            digits = str(input_value) #services.get_digit_display()            
+            digits = services.get_digit_display() #'0'         
             value = Value(value=digits)
             state_data.expression_tree.expressions.append(value)
             return NumberInputStateData(current_value = digits,
