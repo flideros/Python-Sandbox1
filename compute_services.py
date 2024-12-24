@@ -160,7 +160,7 @@ class ComputeServices:
         # Function to replace the matched pattern with the captured number
         def replace_with_number(match):
             return match.group(1)
-        expression = expression.replace('.-','.0-').replace('.+','.0+').replace('.*','.0*').replace('./','.0/')
+        expression = expression.replace('.-','.0-').replace('.+','.0+').replace('.*','.0*').replace('./','.0/').replace('.)','.0)')
         # Regular expression to extract the number within the last set of curly braces
         pattern1 = r"\\\\class\{result-box\}\{(-?\d+)\}" # Integer
         pattern2 = r"\\\\class\{result-box\}\{(-?\d+/-?\d+)\}" # Fraction
@@ -174,7 +174,7 @@ class ComputeServices:
         pattern7 = r'(\))(\()' # Group 1: close parenthesis, Group 2: open parenthesis
         pattern8 = r'(\d)(sqrt)' # Group 1: digit, Group 2: 'sqrt'
         pattern9 = r'(\))(sqrt)' # Between close parenthesis and sqrt
-        pattern10 =r'(\d)\.(\D)' # Group 1: digit, Group 2: non-digit (assume implicitly decimal number)
+        pattern10 = r'(\d)\.(\D)' # Group 1: digit, Group 2: non-digit (assume implicitly decimal number)
         
         patternA = r'\1*\2' # Insert multiplication
         # Process expression with patterns 
@@ -289,10 +289,8 @@ class ComputeServices:
                     _state, exp = calculator_state.stack[0]                    
                     expression = evaluate_expression(exp)                                        
                 else:                    
-                    expression = evaluate_expression(calculator_state.expression_tree)                                        
-                print(f"expression: {expression}")
+                    expression = evaluate_expression(calculator_state.expression_tree)                
                 ex = self.preprocess_expression(expression)
-                print(f"ex: {ex}")
                 expression_out = self.replace_sqrt(expression)
                 result = self.get_mixed_number(ex)
                 result = self.replace_sqrt(result)
