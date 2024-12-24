@@ -2,7 +2,6 @@
 # UI for Four Function Calculator
 # ================================================
 import sys
-import time
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QHBoxLayout,
                              QVBoxLayout, QGridLayout, QPushButton,
                              QLabel, QWidget, QStyle, QFrame, QSizePolicy,

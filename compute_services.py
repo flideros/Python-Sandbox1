@@ -290,8 +290,10 @@ class ComputeServices:
                     expression = evaluate_expression(exp)                                        
                 else:                    
                     expression = evaluate_expression(calculator_state.expression_tree)                                        
+                print(f"expression: {expression}")
                 ex = self.preprocess_expression(expression)
-                expression_out = self.replace_sqrt(ex)
+                print(f"ex: {ex}")
+                expression_out = self.replace_sqrt(expression)
                 result = self.get_mixed_number(ex)
                 result = self.replace_sqrt(result)
                 return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
@@ -300,12 +302,12 @@ class ComputeServices:
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]                    
                     expression = evaluate_expression(exp)
-                    expression = self.preprocess_expression(expression)
+                    #expression = self.preprocess_expression(expression)
                     expression_out = expression
                     expression_out = self.replace_sqrt(expression_out)
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
-                    expression_out = self.preprocess_expression(expression_out)
+                    #expression_out = self.preprocess_expression(expression_out)
                     expression_out = self.replace_sqrt(expression_out)
                 result = " "                
                 return (format_(expression_out),result)
@@ -327,7 +329,7 @@ class ComputeServices:
                 else: 
                     result = self.get_mixed_number(ex)
                     result = self.replace_sqrt(result)
-                expression_out = self.replace_sqrt(ex)
+                expression_out = self.replace_sqrt(expression_out)
                 return (format_(expression_out),result.replace('I',' I').replace('times','cdot ').replace('*','\\\\cdot '))
             
             elif isinstance(calculator_state, FunctionInputStateData):
@@ -338,7 +340,7 @@ class ComputeServices:
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)                    
                 ex = self.preprocess_expression(expression_out)                
-                expression_out = self.replace_sqrt(ex)
+                expression_out = self.replace_sqrt(expression_out)
                 result = " "                
                 return (format_(expression_out),result)
                 
