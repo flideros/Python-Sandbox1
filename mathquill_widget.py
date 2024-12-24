@@ -30,8 +30,7 @@ class MathJaxWindow(QMainWindow):
         
     def load_mathjax_content(self, latex_content):
         # load latex content to self                
-        self.latex_content = latex_content
-        print(f"load_math_content:{latex_content}")
+        self.latex_content = latex_content        
 
     def inject_script(self):
         latex_content = self.latex_content
@@ -39,7 +38,6 @@ class MathJaxWindow(QMainWindow):
         document.getElementById('math-content').innerHTML = '$$' + `{latex_content}` + '$$';
         MathJax.typesetPromise([document.getElementById('math-content')]);
         """
-        print("script injected")
         self.web_view.page().runJavaScript(script)
 
 '''
@@ -149,11 +147,18 @@ class MathQuillWidget(QWidget):
         # Connect the clicked signal from the bridge to the widget's clicked signal
         self.web_page.bridge.clicked.connect(self.handle_click)
     
-    def set_cursor_position(self): 
+    def set_cursor_position(self,stack_count): 
         # Execute JavaScript to set cursor position in MathQuill
         self.web_view.page().runJavaScript("window.mathField.focus(); window.mathField.__controller.cursor.insAtRightEnd(window.mathField.__controller.root);")        
-        #self.web_view.page().runJavaScript("window.focusAndMoveLeft();")
+        count = 0
+        while count < stack_count:
+            self.set_cursor_position_left()
+            count+=1
         
+    def set_cursor_position_left(self): 
+        # Execute JavaScript to set cursor position in MathQuill        
+        self.web_view.page().runJavaScript("window.focusAndMoveLeft();")
+    
     def handle_click(self): self.clicked.emit(self.widget_id)
     
     def update_latex_output(self, latex):
@@ -161,9 +166,7 @@ class MathQuillWidget(QWidget):
         self.parsed_label.setText(f"Parsed LaTeX: {self.parse_latex(latex)}")
         
         if self.parent_window:
-            self.parent_window.update_main_text_input(latex)
-        self.set_cursor_position()
-            
+            self.parent_window.update_main_text_input(latex)           
 
     def parse_latex(self, latex):
         parsed_latex = latex.replace('\\frac', '/').replace('{', '').replace('}', '')
@@ -356,11 +359,12 @@ class MathQuillStackWidget(QWidget):
     def handle_widget_click(self, widget_id):
         self.widgetClicked.emit(widget_id)
     
-    def update_last_widget(self):
+    def update_last_widget(self,stack_count):
         if self.scroll_area_layout.count() > 1:
             widget = self.scroll_area_layout.itemAt(self.scroll_area_layout.count() - 1).widget()
             latex = self.latex_input.text()
             widget.set_latex(latex)
+            widget.set_cursor_position(stack_count)
 
     def update_result(self):
         if self.scroll_area_layout.count() > 1:

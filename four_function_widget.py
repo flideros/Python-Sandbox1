@@ -2,6 +2,7 @@
 # UI for Four Function Calculator
 # ================================================
 import sys
+import time
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QHBoxLayout,
                              QVBoxLayout, QGridLayout, QPushButton,
                              QLabel, QWidget, QStyle, QFrame, QSizePolicy,
@@ -114,7 +115,7 @@ class FourFunctionCalculator(QWidget):
         
         # Math Quill widget for math output and input
         self.mathquill_stack_widget = MathQuillStackWidget(self)
-        #self.mathquill_stack_widget.set_controls_visibility(True)
+        self.mathquill_stack_widget.set_controls_visibility(True)
         self.vbox.addWidget(self.mathquill_stack_widget)
         
         self.mathquill_stack_widget.widgetClicked.connect(self.update_label)
@@ -242,14 +243,13 @@ class FourFunctionCalculator(QWidget):
         
         self.current_input = input_text
         
-        handle_return_input = self.services.handle_return(self.state)
+        handle_return_input = self.services.handle_return(self.state)        
         
         if handle_return_input == True:
             if input_text == 'Return':
                 self.resetSignal.emit() # Emit the reset signal
                 self.mathquill_stack_widget.add_mathquill_widget()
             
-        #output_text, result = self.services.get_display_from_state("Error:")(self.state)
         # Update mathquill output for non-digit input
         if input_text in ['Minus','Plus','Divide by','Times','(',')','Sqrt','Power']:
             # Emit the reset signal
@@ -257,13 +257,10 @@ class FourFunctionCalculator(QWidget):
             output_text, result = self.services.get_display_from_state("Error:")(self.state)
             self.resetSignal.emit()             
             # Update mathquil expression
+            stack_count = self.services.get_stack_count_from_state(self.state)
             self.mathquill_stack_widget.latex_input.setText(output_text)
-            self.mathquill_stack_widget.update_last_widget()
-            # Update mathquil result for non-digit input
-            if result is not None:
-                self.mathquill_stack_widget.result_input.setText(result)
-                self.mathquill_stack_widget.update_result()
-    
+            self.mathquill_stack_widget.update_last_widget(stack_count)
+                
     @pyqtSlot(str)
     def handleTenKeyButtonClicked(self, text: str):
         self.send_ten_key_display(text)        
@@ -273,14 +270,15 @@ class FourFunctionCalculator(QWidget):
         self.state = self.compute(self.current_input, self.state)
         
         # Get latex from servies and state.         
+        stack_count = self.services.get_stack_count_from_state(self.state)
         output_text, result = self.services.get_display_from_state("Error:")(self.state)
         self.mathquill_stack_widget.latex_input.setText(output_text)
-        self.mathquill_stack_widget.update_last_widget()
+        self.mathquill_stack_widget.update_last_widget(stack_count)
         
         # Update mathquil result for digit input
         if result is not None:
             self.mathquill_stack_widget.result_input.setText(result)
-            self.mathquill_stack_widget.update_result()        
+            self.mathquill_stack_widget.update_result()
                         
     def query_digit_display(self) -> str:
         return self.get_digit_display()

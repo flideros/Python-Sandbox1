@@ -73,10 +73,10 @@ class ComputeServices:
         return expr_tree
     
     def sqrt_func(self, x: str) -> str:        
-        return(f"sqrt{x}")
+        return(f"sqrt({x})")
     
     def power_func(self, x: str) -> str:        
-        return(f"**{x}")
+        return(f"**({x})")
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
@@ -153,6 +153,7 @@ class ComputeServices:
         exp = replace_recursive(exp)        
         # Final pass to handle any remaining cases
         exp = re.sub(r'(\S+)\*\*\(([^)]+)\)', r'\1^{{{\2}}}', exp)        
+        
         return exp
     
     def preprocess_expression(self,expression:str) -> str:
@@ -251,6 +252,22 @@ class ComputeServices:
         
         return result
     
+    def get_stack_count_from_state(self, calculator_state) -> int:        
+        if isinstance(calculator_state, StartStateData):
+            return 0            
+        elif isinstance(calculator_state, NumberInputStateData):                
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, OperatorInputStateData):
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, ResultStateData):
+            return 0            
+        elif isinstance(calculator_state, ParenthesisOpenStateData):
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, FunctionInputStateData):
+            return len(calculator_state.stack)                
+        elif isinstance(calculator_state, ErrorStateData):
+            return 0      
+    
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
@@ -274,19 +291,21 @@ class ComputeServices:
                 else:                    
                     expression = evaluate_expression(calculator_state.expression_tree)                                        
                 ex = self.preprocess_expression(expression)
-                expression_out = self.replace_sqrt(expression)
+                expression_out = self.replace_sqrt(ex)
                 result = self.get_mixed_number(ex)
                 result = self.replace_sqrt(result)
                 return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
             
             elif isinstance(calculator_state, OperatorInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]
+                    _state, exp = calculator_state.stack[0]                    
                     expression = evaluate_expression(exp)
-                    expression_out = expression #[:-len(calculator_state.stack)]
+                    expression = self.preprocess_expression(expression)
+                    expression_out = expression
                     expression_out = self.replace_sqrt(expression_out)
                 else:
                     expression_out = evaluate_expression(calculator_state.expression_tree)
+                    expression_out = self.preprocess_expression(expression_out)
                     expression_out = self.replace_sqrt(expression_out)
                 result = " "                
                 return (format_(expression_out),result)
@@ -303,21 +322,23 @@ class ComputeServices:
                     expression_out = evaluate_expression(calculator_state.expression_tree)                    
                     print(f"Expression Out: {expression_out}")
                 ex = self.preprocess_expression(expression_out)
-                result = self.get_mixed_number(ex)
-                result = self.replace_sqrt(result)
+                if ex[-2:] == '()':
+                    result = " "
+                else: 
+                    result = self.get_mixed_number(ex)
+                    result = self.replace_sqrt(result)
                 expression_out = self.replace_sqrt(ex)
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
+                return (format_(expression_out),result.replace('I',' I').replace('times','cdot ').replace('*','\\\\cdot '))
             
             elif isinstance(calculator_state, FunctionInputStateData):
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
                     _state, exp = calculator_state.stack[0]
                     expression = evaluate_expression(exp)
-                    expression_out = expression[:-len(calculator_state.stack)]
-                    #expression_out = self.replace_sqrt(expression_out)
+                    expression_out = expression                   
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree)
-                    #expression_out = self.replace_sqrt(expression_out)
+                    expression_out = evaluate_expression(calculator_state.expression_tree)                    
                 ex = self.preprocess_expression(expression_out)                
+                expression_out = self.replace_sqrt(ex)
                 result = " "                
                 return (format_(expression_out),result)
                 
