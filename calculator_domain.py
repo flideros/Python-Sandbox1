@@ -25,7 +25,8 @@ class CalculatorState(Enum):
     OPERATOR_INPUT = 6
     RESULT = 7
     PARENTHESIS_OPEN = 8
-    ROOT_INPUT = 9
+    FUNCTION_INPUT = 9
+    
 
 class CalculatorInput(Enum):
     """
@@ -232,7 +233,7 @@ def evaluate_expression(expr: Expression) -> str:
     elif isinstance(expr, Conditional):
         return f"if {evaluate_expression(expr.condition)} then {evaluate_expression(expr.true_expr)} else {evaluate_expression(expr.false_expr)}"
     else:
-        pass
+        return ""
         #raise ValueError("Unknown Expression Type")
 
 class MathOperationError(Enum):
@@ -255,7 +256,7 @@ class MathOperationResult:
     failure: Optional[MathOperationError] = None
     
     def __str__(self):
-        return f"MathOperationResult(success='{success}', failure='{failure}')"
+        return f"MathOperationResult(success='{self.success}', failure='{self.failure}')"
 
 # Computation States
 @dataclass
@@ -332,7 +333,7 @@ class StartStateData:
 @dataclass
 class NumberInputStateData:
     current_value: str
-    expression_tree: Compound()
+    expression_tree: Compound
     memory: str = " "       
     stack: List[str] = field(default_factory=list)
 
@@ -341,7 +342,7 @@ class OperatorInputStateData:
     previous_value: str
     operator: str
     current_value: str
-    expression_tree: Compound()
+    expression_tree: Compound
     memory: str = " "    
     stack: List[str] = field(default_factory=list)
     
@@ -354,16 +355,25 @@ class ResultStateData:
 @dataclass
 class ParenthesisOpenStateData:
     inner_expression: str
-    expression_tree: Compound()
+    expression_tree: Compound
     memory: str = " "    
     stack: List[str] = field(default_factory=list)
     
 @dataclass
 class FunctionInputStateData:
     current_value: str
-    expression_tree: Compound()
+    expression_tree: Compound
     memory: str = " "    
     stack: List[str] = field(default_factory=list)
     
     
-    
+ExpressionStateData = Union[
+    StartStateData, 
+    NumberInputStateData, 
+    OperatorInputStateData, 
+    ResultStateData, 
+    ParenthesisOpenStateData, 
+    FunctionInputStateData]
+
+# Type alias for a tuple representing an expression state and the input recieved. 
+ExpressionStateHistoryItem = Tuple[ExpressionStateData, CalculatorInput]

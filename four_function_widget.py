@@ -28,6 +28,7 @@ class FourFunctionCalculator(QWidget):
         self.state = services.initial_state
         self.compute = create_compute(services)
         self.current_input = None
+        self.history = []
                 
         self.send_ten_key_display = self.services.receive_ten_key_display
         self.get_digit_display = self.services.get_digit_display
