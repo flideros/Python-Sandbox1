@@ -51,7 +51,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             
             elif input_type == 'FUNCTION':                
                 if _input_value == MathFunction.SQRT:                                    
-                    print("Function Input {_input_value} - Transition to FunctionInputState")
+                    print(f"Function Input {_input_value} - Transition to FunctionInputState")
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
                     new_tree = Compound([function])
@@ -304,7 +304,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
             elif input_type == 'FUNCTION':                  
                 if _input_value == MathFunction.SQRT:                
-                    print("Function Input {_input_value} - Transition to FunctionInputState")
+                    print(f"Function Input {_input_value} - Transition to FunctionInputState")
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
                     state_data.expression_tree.expressions.append(function)             
@@ -440,7 +440,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = state_data.memory,
                                                   stack = state_data.stack)
             elif input_type == 'FUNCTION':   
-                print("Function Input {_input_value} - Transition to FunctionInputState")
+                print(f"Function Input {_input_value} - Transition to FunctionInputState")
                 if _input_value == MathFunction.SQRT:
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
@@ -598,7 +598,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   stack = state_data.stack)
         
             elif input_type == 'FUNCTION':   
-                print("Function Input {_input_value} - Transition to FunctionInputState")
+                print(f"Function Input {_input_value} - Transition to FunctionInputState")
                 if _input_value == MathFunction.SQRT:                
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)
@@ -687,7 +687,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                                   memory = state_data.memory)
         
             elif input_type == 'FUNCTION':   
-                print("Function Input {_input_value} - Transition to FunctionInputState")
+                print(f"Function Input {_input_value} - Transition to FunctionInputState")
                 if _input_value == MathFunction.SQRT:
                     new_compound = Compound([])            
                     function = Function(new_compound,services.sqrt_func)

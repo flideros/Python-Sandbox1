@@ -85,76 +85,27 @@ class ComputeServices:
         out = self.digit_display        
         return out
     
+    def get_stack_count_from_state(self, calculator_state) -> int:        
+        if isinstance(calculator_state, StartStateData):
+            return 0            
+        elif isinstance(calculator_state, NumberInputStateData):                
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, OperatorInputStateData):
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, ResultStateData):
+            return 0            
+        elif isinstance(calculator_state, ParenthesisOpenStateData):
+            return len(calculator_state.stack)            
+        elif isinstance(calculator_state, FunctionInputStateData):
+            return len(calculator_state.stack)                
+        elif isinstance(calculator_state, ErrorStateData):
+            return 0
+        
     def add_parentheses_if_needed(self, text): 
         if re.search(r'[/*+-]', text):
             # Add parentheses around the string
             text = f'({text})'
         return text
-            
-    def replace_sqrt(self, exp):
-        def replace_all_sqrt(exp):
-            pattern = re.compile(r'sqrt\(([^()]*)\)')
-            while 'sqrt(' in exp:
-                matches = list(pattern.finditer(exp))
-                if not matches:
-                    break
-                for match in matches:
-                    start = match.start()
-                    end = match.end()
-                    inner_exp = match.group(1)
-                    exp = exp[:start] + f'sqrt{{{inner_exp}}}' + exp[end:]
-            return exp
-        
-        def find_balanced_parentheses(s, start_index):
-            stack = []
-            end_index = start_index
-            for index in range(start_index, len(s)):
-                if s[index] == '(':
-                    stack.append(index)
-                elif s[index] == ')':
-                    if stack:
-                        stack.pop()
-                    if not stack:
-                        end_index = index + 1
-                        break
-            return s[start_index:end_index], end_index
-
-        def replace_balanced_sqrt(exp):
-            while True:
-                start_index = exp.find('sqrt(')
-                if start_index == -1:
-                    break
-                open_paren = 0
-                for i in range(start_index + 5, len(exp)):
-                    if exp[i] == '(':
-                        open_paren += 1
-                    elif exp[i] == ')':
-                        if open_paren == 0:
-                            inner_exp = exp[start_index + 5:i]
-                            replaced_inner_exp = replace_all_sqrt(inner_exp)
-                            exp = exp[:start_index] + f'sqrt{{{replaced_inner_exp}}}' + exp[i+1:]
-                            break
-                        else:
-                            open_paren -= 1
-            return exp
-        
-        return replace_balanced_sqrt(exp)
-    
-    def replace_power(self, exp):
-        def replace_recursive(exp):
-            pattern_nested = re.compile(r'(\S+)\*\*\((.*?)\)')
-            while pattern_nested.search(exp):
-                exp = pattern_nested.sub(lambda match: f'{match.group(1)}^{{{replace_recursive(match.group(2))}}}', exp)
-            return exp
-        
-        # Handle basic powers like `x**2`
-        exp = re.sub(r'(\S+)\*\*(\d+)', r'\1^{{{\2}}}', exp)        
-        # Handle nested exponents recursively
-        exp = replace_recursive(exp)        
-        # Final pass to handle any remaining cases
-        exp = re.sub(r'(\S+)\*\*\(([^)]+)\)', r'\1^{{{\2}}}', exp)        
-        
-        return exp
     
     def preprocess_expression(self,expression:str) -> str:
         # Function to replace the matched pattern with the captured number
@@ -199,17 +150,17 @@ class ComputeServices:
         except Exception as e:
             print(f"get_decimal_value----error: {e} ")
             result = exp  # or str(e)
+            
     def simplify_expression(self, expression):
         try:
             exp = self.preprocess_expression(expression)
             result = sp.sympify(exp)
         except Exception as e:
             print(f"simplify_expression----error: {e} ")
-            result = exp  # or str(e)
-        
+            result = exp  # or str(e)        
         return result
     
-    def get_mixed_number(self, expression: str):
+    def get_latex_or_mixed_number(self, expression: str):
         try:            
             exp = sp.sympify(expression)           
             
@@ -230,7 +181,6 @@ class ComputeServices:
                         integer = -integer
                     if integer == 0 and numerator < 0:
                         remainder = -remainder
-
                     if integer == 0 and remainder == 0:
                         result = "0"
                     elif integer == 0 and remainder != 0:
@@ -247,100 +197,138 @@ class ComputeServices:
                 result = str(exp.evalf(15)).rstrip('0').rstrip('.')
 
         except Exception as e:
-            print(f"get_mixed_number----error: {e} ")
+            #print(f"get_latex_or_mixed_number----error: {e} ")
             result = expression  # or str(e)
         
         return result
-    
-    def get_stack_count_from_state(self, calculator_state) -> int:        
-        if isinstance(calculator_state, StartStateData):
-            return 0            
-        elif isinstance(calculator_state, NumberInputStateData):                
-            return len(calculator_state.stack)            
-        elif isinstance(calculator_state, OperatorInputStateData):
-            return len(calculator_state.stack)            
-        elif isinstance(calculator_state, ResultStateData):
-            return 0            
-        elif isinstance(calculator_state, ParenthesisOpenStateData):
-            return len(calculator_state.stack)            
-        elif isinstance(calculator_state, FunctionInputStateData):
-            return len(calculator_state.stack)                
-        elif isinstance(calculator_state, ErrorStateData):
-            return 0      
     
     def get_display_from_state(self, error_msg: str):
         """
         Returns the display strings based on the current state of the computation.
         """
+        def replace_sqrt(exp):
+            def replace_all_sqrt(exp):
+                pattern = re.compile(r'sqrt\(([^()]*)\)')
+                while 'sqrt(' in exp:
+                    matches = list(pattern.finditer(exp))
+                    if not matches:
+                        break
+                    for match in matches:
+                        start = match.start()
+                        end = match.end()
+                        inner_exp = match.group(1)
+                        exp = exp[:start] + f'sqrt{{{inner_exp}}}' + exp[end:]
+                return exp
+
+            def replace_balanced_sqrt(exp):
+                while True:
+                    start_index = exp.find('sqrt(')
+                    if start_index == -1:
+                        break
+                    open_paren = 0
+                    for i in range(start_index + 5, len(exp)):
+                        if exp[i] == '(':
+                            open_paren += 1
+                        elif exp[i] == ')':
+                            if open_paren == 0:
+                                inner_exp = exp[start_index + 5:i]
+                                replaced_inner_exp = replace_all_sqrt(inner_exp)
+                                exp = exp[:start_index] + f'sqrt{{{replaced_inner_exp}}}' + exp[i+1:]
+                                break
+                            else:
+                                open_paren -= 1
+                return exp            
+            return replace_balanced_sqrt(exp)
+        
+        def replace_power(exp):
+            def replace_recursive(exp):
+                pattern_nested = re.compile(r'(\S+)\*\*\((.*?)\)')
+                while pattern_nested.search(exp):
+                    exp = pattern_nested.sub(lambda match: f'{match.group(1)}^{{{replace_recursive(match.group(2))}}}', exp)
+                return exp
+            
+            # Handle basic powers like `x**2`
+            exp = re.sub(r'(\S+)\*\*(\d+)', r'\1^{{{\2}}}', exp)        
+            # Handle nested exponents recursively
+            exp = replace_recursive(exp)        
+            # Final pass to handle any remaining cases
+            exp = re.sub(r'(\S+)\*\*\(([^)]+)\)', r'\1^{{{\2}}}', exp)        
+            
+            return exp
+        
         def format_(exp:str) -> str:                   
             # Handle '**' by replacing it with '^{}                       
-            exp = self.replace_power(exp)
-            
+            exp = replace_power(exp)            
             exp = exp.replace('.-','.0-').replace('.+','.0+').replace('.*','.0*').replace('./','.0/')
             exp = exp.replace('*','\\\\times').replace('/','\\\\div').replace('I',' I').replace('sqrt','\\\\sqrt')            
             return exp 
+        
+        def format_result_(exp:str) -> str:
+            result = exp.replace('I',' I').replace('*','\\\\cdot ')
+            return result
         
         def inner(calculator_state) -> str:
             if isinstance(calculator_state, StartStateData):                
                 return (self.digit_display, " ")
             
             elif isinstance(calculator_state, NumberInputStateData):                
+                # Expression Out
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]                    
-                    expression = evaluate_expression(exp)                                        
+                    _state, exp_tree = calculator_state.stack[0]                    
+                    expression_latex = evaluate_expression(exp_tree)                                        
                 else:                    
-                    expression = evaluate_expression(calculator_state.expression_tree)                
-                ex = self.preprocess_expression(expression)
-                expression_out = self.replace_sqrt(expression)
-                result = self.get_mixed_number(ex)
-                result = self.replace_sqrt(result)
-                return (format_(expression_out),result.replace('I',' I').replace('*','\\\\cdot '))
+                    expression_latex = evaluate_expression(calculator_state.expression_tree)                               
+                expression_out_latex = replace_sqrt(expression_latex)
+                # Result
+                result_latex = self.preprocess_expression(expression_latex)
+                result_latex = self.get_latex_or_mixed_number(result_latex)
+                result_latex = replace_sqrt(result_latex)
+                
+                return (format_(expression_out_latex),format_result_(result_latex))
             
             elif isinstance(calculator_state, OperatorInputStateData):
+                # Expression Out
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]                    
-                    expression = evaluate_expression(exp)
-                    #expression = self.preprocess_expression(expression)
-                    expression_out = expression
-                    expression_out = self.replace_sqrt(expression_out)
+                    _state, exp_tree = calculator_state.stack[0]                    
+                    expression_out_latex = evaluate_expression(exp_tree)                    
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree)
-                    #expression_out = self.preprocess_expression(expression_out)
-                    expression_out = self.replace_sqrt(expression_out)
-                result = " "                
-                return (format_(expression_out),result)
+                    expression_out_latex = evaluate_expression(calculator_state.expression_tree)                    
+                expression_out_latex = replace_sqrt(expression_out_latex)
+                # Result
+                result_latex = " "                
+                return (format_(expression_out_latex),result_latex)
             
             elif isinstance(calculator_state, ResultStateData):
                 return (" ", None)
             
             elif isinstance(calculator_state, ParenthesisOpenStateData):
+                # Expression Out
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)
-                    expression_out = expression#[:-len(calculator_state.stack)]                    
+                    _state, exp_tree = calculator_state.stack[0]
+                    expression_latex = evaluate_expression(exp_tree)
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree)                    
-                    print(f"Expression Out: {expression_out}")
-                ex = self.preprocess_expression(expression_out)
-                if ex[-2:] == '()':
-                    result = " "
+                    expression_latex = evaluate_expression(calculator_state.expression_tree)                    
+                expression_out_latex = replace_sqrt(expression_latex)
+                # Result
+                if expression_out_latex[-2:] == '()':
+                    result_latex = " "
                 else: 
-                    result = self.get_mixed_number(ex)
-                    result = self.replace_sqrt(result)
-                expression_out = self.replace_sqrt(expression_out)
-                return (format_(expression_out),result.replace('I',' I').replace('times','cdot ').replace('*','\\\\cdot '))
+                    result_latex = self.get_latex_or_mixed_number(expression_latex)
+                    result_latex = replace_sqrt(result_latex)
+                
+                return (format_(expression_out_latex),format_result_(result_latex))
             
             elif isinstance(calculator_state, FunctionInputStateData):
+                # Expression Out
                 if calculator_state.stack is not None and len(calculator_state.stack) > 0:
-                    _state, exp = calculator_state.stack[0]
-                    expression = evaluate_expression(exp)
-                    expression_out = expression                   
+                    _state, exp_tree = calculator_state.stack[0]
+                    expression_latex = evaluate_expression(exp_tree)                   
                 else:
-                    expression_out = evaluate_expression(calculator_state.expression_tree)                    
-                ex = self.preprocess_expression(expression_out)                
-                expression_out = self.replace_sqrt(expression_out)
-                result = " "                
-                return (format_(expression_out),result)
+                    expression_latex = evaluate_expression(calculator_state.expression_tree)             
+                expression_out_latex = replace_sqrt(expression_latex)
+                # Result
+                result_latex = " "                
+                return (format_(expression_out_latex),result_latex)
                 
             elif isinstance(calculator_state, ErrorStateData):
                 return (error_msg + calculator_state.math_error.value, None)
