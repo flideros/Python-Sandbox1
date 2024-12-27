@@ -746,18 +746,25 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             or None if the input is not handled by any state.
         """
         if isinstance(state, StartStateData):
+            services.set_recent_history(state,input)
             return handle_start_state(StartStateData, input)
         elif isinstance(state, NumberInputStateData):
+            services.set_recent_history(state,input)
             return handle_number_input_state(state, input)
         elif isinstance(state, OperatorInputStateData):
+            services.set_recent_history(state,input)
             return handle_operator_input_state(state, input)        
         elif isinstance(state, ParenthesisOpenStateData):
+            services.set_recent_history(state,input)
             return handle_parenthesis_open_state(state, input)        
         elif isinstance(state, FunctionInputStateData):
+            services.set_recent_history(state,input)
             return handle_function_input_state(state, input)        
         elif isinstance(state, ResultStateData):
+            services.set_recent_history(state,input)
             return handle_result_state(state, input)        
         elif isinstance(state, ErrorStateData):
+            services.set_recent_history(state,input)
             return handle_error_state(state, input, state.memory)
         return None
 

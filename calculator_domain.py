@@ -376,4 +376,13 @@ ExpressionStateData = Union[
     FunctionInputStateData]
 
 # Type alias for a tuple representing an expression state and the input recieved. 
-ExpressionStateHistoryItem = Tuple[ExpressionStateData, CalculatorInput]
+@dataclass
+class ExpressionStateHistoryItem:
+    recent_state_data: ExpressionStateData
+    current_input: CalculatorInput
+    
+    def __str__(self):
+        state_type_name = type(self.recent_state_data).__name__
+        return f"recent state data -> {state_type_name} with current input -> {self.current_input}"
+
+

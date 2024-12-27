@@ -240,6 +240,9 @@ class FourFunctionCalculator(QWidget):
         
         if input_action is not None:             
             self.state = self.compute(input_action, self.state)
+            
+            self.history = self.services.get_recent_history(self.history)        
+            print(f"GUI history:{self.history[-1]}")
         
         self.current_input = input_text
         
@@ -268,6 +271,9 @@ class FourFunctionCalculator(QWidget):
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
         
         self.state = self.compute(self.current_input, self.state)
+        
+        self.history = self.services.get_recent_history(self.history)            
+        print(f"GUI history:{self.history[-1]}")
         
         # Get latex from servies and state.         
         stack_count = self.services.get_stack_count_from_state(self.state)

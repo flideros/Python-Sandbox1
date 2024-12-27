@@ -2,9 +2,10 @@
 # Compute Services
 # ================================================
 from typing import Optional, Tuple, Union, Dict, Callable, List
-from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number, CalculatorMathOp,
-                               ErrorStateData, StartStateData,  NumberInputStateData, MathFunction, evaluate_expression,
-                               OperatorInputStateData, ResultStateData, ParenthesisOpenStateData, FunctionInputStateData)
+from calculator_domain import (Expression, Value, Operator, Parenthesis, Function, Compound, CalculatorInput, Number,
+                               CalculatorMathOp, ErrorStateData, StartStateData,  NumberInputStateData, MathFunction,
+                               evaluate_expression, OperatorInputStateData, ResultStateData, ParenthesisOpenStateData,
+                               FunctionInputStateData, ExpressionStateData, ExpressionStateHistoryItem)
 import re
 import math
 import sympy as sp
@@ -13,6 +14,7 @@ class ComputeServices:
     def __init__(self):
         super().__init__()
         self.digit_display = " "
+        self.recent_history = None
     
     def handle_return(self,state) -> bool:
         def inner(state) -> bool:            
@@ -80,6 +82,14 @@ class ComputeServices:
     
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
+    
+    def set_recent_history(self,recent_state_data: ExpressionStateData, current_input: CalculatorInput):        
+        recent_history = ExpressionStateHistoryItem(recent_state_data=recent_state_data, current_input=current_input)
+        self.recent_history = recent_history
+        
+    def get_recent_history(self, history_list):
+        history_list.append(self.recent_history)
+        return history_list 
     
     def get_digit_display(self):
         out = self.digit_display        
