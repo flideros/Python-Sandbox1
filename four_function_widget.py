@@ -263,6 +263,7 @@ class FourFunctionCalculator(QWidget):
             stack_count = self.services.get_stack_count_from_state(self.state)
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget(stack_count)
+            
                 
     @pyqtSlot(str)
     def handleTenKeyButtonClicked(self, text: str):

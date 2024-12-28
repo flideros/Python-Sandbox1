@@ -88,6 +88,7 @@ class CustomWebEnginePage(QWebEnginePage):
 class MathQuillWidget(QWidget):
     latexChanged = pyqtSlot(str)
     clicked = pyqtSignal(int) # Signal to be emitted when the widget is clicked
+    blurSignal = pyqtSignal() # Define the blur signal
     
     def __init__(self, widget_id, parent=None):
         super().__init__(parent)        
@@ -95,6 +96,7 @@ class MathQuillWidget(QWidget):
         self.parent_window = parent  # Reference to the main window
         self.id_label = QLabel(f"MathQuill Widget {widget_id}")
         self.result_latex = ''
+        self.blurSignal.connect(self.on_blur_signal) # Connect the blur signal to the blur handler
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)  # Set margins to 0
@@ -147,6 +149,11 @@ class MathQuillWidget(QWidget):
         # Connect the clicked signal from the bridge to the widget's clicked signal
         self.web_page.bridge.clicked.connect(self.handle_click)
     
+    def set_mathfield_focus(self): 
+        # Execute JavaScript to set focus in MathQuill
+        self.web_view.page().runJavaScript("window.mathField.focus();")        
+        
+    
     def set_cursor_position(self,stack_count): 
         # Execute JavaScript to set cursor position in MathQuill
         self.web_view.page().runJavaScript("window.mathField.focus(); window.mathField.__controller.cursor.insAtRightEnd(window.mathField.__controller.root);")        
@@ -155,11 +162,27 @@ class MathQuillWidget(QWidget):
             self.set_cursor_position_left()
             count+=1
         
+    def remove_cursor_focus(self):
+        # Execute JavaScript to set focus to a hidden input field
+        self.web_view.page().runJavaScript("window.mathField.blur();")
+        
     def set_cursor_position_left(self): 
         # Execute JavaScript to set cursor position in MathQuill        
         self.web_view.page().runJavaScript("window.focusAndMoveLeft();")
     
-    def handle_click(self): self.clicked.emit(self.widget_id)
+    def on_blur_signal(self):
+        self.remove_cursor_focus()
+    
+    def event(self, e):
+        if e.type() == QEvent.Type.FocusIn:
+            print(f"Widget {self.widget_id} gained focus.")
+        elif e.type() == QEvent.Type.FocusOut:
+            print(f"Widget {self.widget_id} lost focus.")
+        return super().event(e)
+    
+    def handle_click(self):
+        self.clicked.emit(self.widget_id)
+        print(f"widget_id -> {self.widget_id}")
     
     def update_latex_output(self, latex):
         self.latex_label.setText(f"LaTeX Output: {latex}")
@@ -230,12 +253,12 @@ class MathQuillStackWidget(QWidget):
     latexUpdated = pyqtSignal(str)
     resultUpdated = pyqtSignal(str)
     widgetClicked = pyqtSignal(int)
+    blurAllWidgets = pyqtSignal() # Signal to blur all widgets
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("MathQuillStack in PyQt6")
         self.setGeometry(100, 100, 800, 600)
-        
         self.control_visibility = False  # Control visibility variable
 
         self.layout = QVBoxLayout(self)
@@ -348,19 +371,31 @@ class MathQuillStackWidget(QWidget):
         self.toggle_frame_button.setVisible(visible)
         self.add_widget_button.setVisible(visible)
 
-    def add_mathquill_widget(self):
+    def add_mathquill_widget(self):        
         widget_id = self.scroll_area_layout.count()
         widget = MathQuillWidget(widget_id)
         widget.clicked.connect(self.handle_widget_click)
+        self.blurAllWidgets.connect(widget.blurSignal) # Connect the blur signal
         self.scroll_area_layout.insertWidget(self.scroll_area_layout.count(), widget)  # Insert above the stretch label
-        self.widgets_dict[widget_id] = widget.widget_id # Add widget to dictionary
+        self.widgets_dict[widget_id] = widget # Add widget to dictionary
         QTimer.singleShot(100, self.scroll_to_bottom)  # Ensure the scrollbar updates correctly
-
+        self.blurAllWidgets.emit()
+        QTimer.singleShot(500, lambda: widget.set_mathfield_focus())
+        QTimer.singleShot(500, lambda: widget.set_cursor_position(0))
+        
     def handle_widget_click(self, widget_id):
-        self.widgetClicked.emit(widget_id)
+        self.widgets_dict[widget_id].set_mathfield_focus()
+        self.widgets_dict[widget_id].handle_click        
+        print()
+        for id in self.widgets_dict:
+            if id != widget_id:                
+                self.widgets_dict[id].remove_cursor_focus()
+        self.widgets_dict[widget_id].set_mathfield_focus()        
+        
     
     def update_last_widget(self,stack_count):
         if self.scroll_area_layout.count() > 1:
+            self.blurAllWidgets.emit()
             widget = self.scroll_area_layout.itemAt(self.scroll_area_layout.count() - 1).widget()
             latex = self.latex_input.text()
             widget.set_latex(latex)
@@ -386,7 +421,7 @@ class MathQuillStackWidget(QWidget):
     
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
-      
+            
 class MainAppWindow(QMainWindow):
     def __init__(self):
         super().__init__()
