@@ -151,8 +151,7 @@ class MathQuillWidget(QWidget):
     
     def set_mathfield_focus(self): 
         # Execute JavaScript to set focus in MathQuill
-        self.web_view.page().runJavaScript("window.mathField.focus();")        
-        
+        self.web_view.page().runJavaScript("window.mathField.focus();")                
     
     def set_cursor_position(self,stack_count): 
         # Execute JavaScript to set cursor position in MathQuill

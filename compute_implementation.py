@@ -258,7 +258,21 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
             return ParenthesisOpenStateData(inner_expression = new_inner_expression,                                        
                                             expression_tree = state_data.expression_tree,
                                             memory = state_data.memory,
-                                            stack = state_data.stack)        
+                                            stack = state_data.stack)
+        
+        elif input == CalculatorInput.BACK:
+            print("Back Input - Stay in NumberInputState") # ToDo: consider changing this to Parenthesis State
+            digits = services.get_digit_display()
+            value = Value(value=digits)
+            if isinstance(state_data.expression_tree.expressions[-1], Value):
+                if state_data.expression_tree.expressions[-1].result:
+                    return state_data
+                else:  
+                    state_data.expression_tree.expressions[-1] =  value               
+            return NumberInputStateData(current_value = digits,
+                                        expression_tree = state_data.expression_tree,
+                                        memory = state_data.memory,
+                                        stack = state_data.stack)
         
         return state_data  # Return the current state if no condition matches
     
@@ -731,7 +745,8 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
     
     def handle_error_state(state_data: ErrorStateData, input, memory) -> CalculatorState: pass
     
-    def handle_back_state(state_data: CalculatorState, previous_input: CalculatorInput) -> CalculatorState: pass
+    def handle_undo_redo_input(state_data: CalculatorState, previous_input: CalculatorInput) -> CalculatorState: pass
+        
     
     def compute(input, state) -> Optional[CalculatorState]: 
         """

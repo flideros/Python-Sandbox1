@@ -352,6 +352,7 @@ class ComputeServices:
     Returns a dictionary of charachter mappings to calculator inputs
     """
     input_mapping = {
+            '←': (CalculatorInput.BACK, None),
             '+': (CalculatorInput.MATHOP, CalculatorMathOp.ADD),
             '-': (CalculatorInput.MATHOP, CalculatorMathOp.SUBTRACT),
             '*': (CalculatorInput.MATHOP, CalculatorMathOp.MULTIPLY),

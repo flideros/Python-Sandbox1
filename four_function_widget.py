@@ -2,6 +2,7 @@
 # UI for Four Function Calculator
 # ================================================
 import sys
+import time
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QHBoxLayout,
                              QVBoxLayout, QGridLayout, QPushButton,
                              QLabel, QWidget, QStyle, QFrame, QSizePolicy,
@@ -18,6 +19,7 @@ from enum import Enum
 
 class FourFunctionCalculator(QWidget):
     resetSignal = pyqtSignal()
+    backSignal = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -29,6 +31,7 @@ class FourFunctionCalculator(QWidget):
         self.compute = create_compute(services)
         self.current_input = None
         self.history = []
+        self.input_mapping = ComputeServices.input_mapping
                 
         self.send_ten_key_display = self.services.receive_ten_key_display
         self.get_digit_display = self.services.get_digit_display
@@ -133,6 +136,7 @@ class FourFunctionCalculator(QWidget):
         # 10-key Widget
         self.ten_key = TenKey('digits_mr_decimal')#,BUTTON_COLOR) # set the 10-key button color or use default
         self.resetSignal.connect(self.ten_key.reset_input)
+        self.backSignal.connect(self.ten_key.back_input)
         self.ten_key.button_color = BUTTON_COLOR
         self.ten_key.buttonClicked.connect(self.handleTenKeyButtonClicked)
         self.ten_key.inputClicked.connect(lambda x: self.handleInputClicked(x))
@@ -187,8 +191,8 @@ class FourFunctionCalculator(QWidget):
             back_button.setIconSize(QSize(23, 23))
             back_button.setStyleSheet(button_style)
             self.utility_button_grid_layout.addWidget(back_button, r, c)
-            #back_button.clicked.connect(self.create_handler('←'))
-            #back_button.clicked.connect(self.handle_button_clicked)
+            back_button.clicked.connect(self.create_handler('←'))
+            
                     
         utility_buttons = [
             ('Undo', 0, 0), ('Redo', 0, 1), ('Clear', 0, 2)
@@ -228,13 +232,14 @@ class FourFunctionCalculator(QWidget):
         return handler
 
     def emitResetSignal(self): # 10-Key subscribes to this signal to clear the digit accumulator
-        self.resetSignal.emit() 
+        self.resetSignal.emit()
+        
+    def emitBackSignal(self): # 10-Key subscribes to this signal to send back to the digit accumulator
+        self.backSignal.emit()
 
     @pyqtSlot(str)
-    def handleInputClicked(self, input_text):        
-        input_mapping = ComputeServices.input_mapping        
-        input_action, param = input_mapping.get(input_text, (None, None))
-        
+    def handleInputClicked(self, input_text):                
+        input_action, param = self.input_mapping.get(input_text, (None, None))
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
@@ -243,7 +248,7 @@ class FourFunctionCalculator(QWidget):
             
             self.history = self.services.get_recent_history(self.history)        
             print(f"GUI history:{self.history[-1]}")
-        
+            
         self.current_input = input_text
         
         handle_return_input = self.services.handle_return(self.state)        
@@ -255,18 +260,27 @@ class FourFunctionCalculator(QWidget):
             
         # Update mathquill output for non-digit input
         if input_text in ['Minus','Plus','Divide by','Times','(',')','Sqrt','Power']:
-            # Emit the reset signal
-            
+            # Get current display
             output_text, result = self.services.get_display_from_state("Error:")(self.state)
+            # Emit the reset signal
             self.resetSignal.emit()             
             # Update mathquil expression
             stack_count = self.services.get_stack_count_from_state(self.state)
             self.mathquill_stack_widget.latex_input.setText(output_text)
             self.mathquill_stack_widget.update_last_widget(stack_count)
+        
+        if input_text == '←':            
+            # Emit the back signal
+            self.emitBackSignal()
+            # Get current display
+            output_text, result = self.services.get_display_from_state("Error:")(self.state)             
+            # Update mathquil expression
+            stack_count = self.services.get_stack_count_from_state(self.state)
+            self.mathquill_stack_widget.latex_input.setText(output_text)
+            self.mathquill_stack_widget.update_last_widget(stack_count)
             
-                
     @pyqtSlot(str)
-    def handleTenKeyButtonClicked(self, text: str):
+    def handleTenKeyButtonClicked(self, text: str):                 
         self.send_ten_key_display(text)        
         self.query_digit_display()
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")

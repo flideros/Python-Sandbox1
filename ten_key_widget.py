@@ -219,6 +219,18 @@ class TenKey(QWidget):
         
         self.state = self.calculate(input_action, self.state)         
         self.update_display()
+        
+    # Function to set accumulator back.
+    def back_input(self):        
+        input_mapping = CalculatorServices.ten_key_input_mapping   
+        input_action, param = input_mapping.get('←', (None, None))
+        
+        if input_action is not None:            
+            self.state = self.calculate(input_action, self.state)            
+            self.inputClicked.emit(input_action)  
+            
+        self.update_display()
+        self.handle_button_clicked()
     
     # Function to display current state
     def update_display(self):
