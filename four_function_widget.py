@@ -243,9 +243,8 @@ class FourFunctionCalculator(QWidget):
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
-        if input_action is not None:             
-            self.state = self.compute(input_action, self.state)
-            
+        if input_action is not None and input_text != '←':             
+            self.state = self.compute(input_action, self.state)            
             self.history = self.services.get_recent_history(self.history)        
             print(f"GUI history:{self.history[-1]}")
             
