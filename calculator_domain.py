@@ -380,9 +380,10 @@ ExpressionStateData = Union[
 class ExpressionStateHistoryItem:
     recent_state_data: ExpressionStateData
     current_input: CalculatorInput
+    widget_ID: int
     
     def __str__(self):
         state_type_name = type(self.recent_state_data).__name__
-        return f"recent state data -> {state_type_name} with current input -> {self.current_input}"
+        return f"recent state data -> {state_type_name} with current input -> {self.current_input} on mathquill widget No. {self.widget_ID}"
 
 

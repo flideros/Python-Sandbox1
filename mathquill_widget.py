@@ -259,7 +259,8 @@ class MathQuillStackWidget(QWidget):
         self.setWindowTitle("MathQuillStack in PyQt6")
         self.setGeometry(100, 100, 800, 600)
         self.control_visibility = False  # Control visibility variable
-
+        self.active_widget_ID = 0
+        
         self.layout = QVBoxLayout(self)
 
         self.latex_input = QLineEdit()
@@ -372,6 +373,7 @@ class MathQuillStackWidget(QWidget):
 
     def add_mathquill_widget(self):        
         widget_id = self.scroll_area_layout.count()
+        self.active_widget_ID = widget_id
         widget = MathQuillWidget(widget_id)
         widget.clicked.connect(self.handle_widget_click)
         self.blurAllWidgets.connect(widget.blurSignal) # Connect the blur signal

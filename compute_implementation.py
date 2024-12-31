@@ -261,7 +261,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
                                             stack = state_data.stack)
         
         elif input == CalculatorInput.BACK:
-            print("Back Input - Stay in NumberInputState") # ToDo: consider changing this to Parenthesis State
+            print("Back Input - Stay in NumberInputState")
             digits = services.get_digit_display()
             value = Value(value=digits)
             if isinstance(state_data.expression_tree.expressions[-1], Value):
@@ -748,7 +748,7 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
     def handle_undo_redo_input(state_data: CalculatorState, previous_input: CalculatorInput) -> CalculatorState: pass
         
     
-    def compute(input, state) -> Optional[CalculatorState]: 
+    def compute(input, state, widget_id) -> Optional[CalculatorState]: 
         """
         Routes the input and state to the appropriate handler and returns the new calculator state.
         
@@ -759,27 +759,27 @@ def create_compute(services: ComputeServices)-> Callable[[CalculatorState, Calcu
         Returns:
             Optional[CalculatorState]: The new state of the calculator after processing the input,
             or None if the input is not handled by any state.
-        """
+        """               
         if isinstance(state, StartStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_start_state(StartStateData, input)
         elif isinstance(state, NumberInputStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_number_input_state(state, input)
         elif isinstance(state, OperatorInputStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_operator_input_state(state, input)        
         elif isinstance(state, ParenthesisOpenStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_parenthesis_open_state(state, input)        
         elif isinstance(state, FunctionInputStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_function_input_state(state, input)        
         elif isinstance(state, ResultStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_result_state(state, input)        
         elif isinstance(state, ErrorStateData):
-            services.set_recent_history(state,input)
+            services.set_recent_history(state,input,widget_id)
             return handle_error_state(state, input, state.memory)
         return None
 

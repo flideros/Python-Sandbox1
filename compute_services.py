@@ -83,8 +83,8 @@ class ComputeServices:
     def receive_ten_key_display(self, display: str):
         self.digit_display = display
     
-    def set_recent_history(self,recent_state_data: ExpressionStateData, current_input: CalculatorInput):        
-        recent_history = ExpressionStateHistoryItem(recent_state_data=recent_state_data, current_input=current_input)
+    def set_recent_history(self,recent_state_data: ExpressionStateData, current_input: CalculatorInput, widget_id):        
+        recent_history = ExpressionStateHistoryItem(recent_state_data=recent_state_data, current_input=current_input, widget_ID=widget_id)
         self.recent_history = recent_history
         
     def get_recent_history(self, history_list):

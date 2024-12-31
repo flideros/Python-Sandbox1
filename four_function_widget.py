@@ -114,7 +114,7 @@ class FourFunctionCalculator(QWidget):
         self.label = QLabel('This is a label', self)
         self.vbox.addWidget(self.label)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.hide()
+        #self.label.hide()
         
         # Math Quill widget for math output and input
         self.mathquill_stack_widget = MathQuillStackWidget(self)
@@ -240,11 +240,12 @@ class FourFunctionCalculator(QWidget):
     @pyqtSlot(str)
     def handleInputClicked(self, input_text):                
         input_action, param = self.input_mapping.get(input_text, (None, None))
+        widget_id = self.mathquill_stack_widget.active_widget_ID
         if callable(input_action) and param is not None:
             input_action = input_action(param)
         
         if input_action is not None and input_text != '←':             
-            self.state = self.compute(input_action, self.state)            
+            self.state = self.compute(input_action, self.state, widget_id)            
             self.history = self.services.get_recent_history(self.history)        
             print(f"GUI history:{self.history[-1]}")
             
@@ -283,8 +284,8 @@ class FourFunctionCalculator(QWidget):
         self.send_ten_key_display(text)        
         self.query_digit_display()
         self.label.setText(f"You clicked: {text} and service state is {self.query_digit_display()}")
-        
-        self.state = self.compute(self.current_input, self.state)
+        widget_id = self.mathquill_stack_widget.active_widget_ID
+        self.state = self.compute(self.current_input, self.state, widget_id)
         
         self.history = self.services.get_recent_history(self.history)            
         print(f"GUI history:{self.history[-1]}")
